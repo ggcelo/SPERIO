@@ -134,10 +134,92 @@ with st.form("form_dados_caso"): #tudo dentro do with fica armazenado dentro do 
 #coloca todos os dados do formulario dentro do dados_caso
 if salvar_dados:
 
-    st.session_state["dados_caso"]["codigo"] = codigo_digitado
-    st.session_state["dados_caso"]["idade"] = idade_digitada
-    st.session_state["dados_caso"]["sexo"] = sexo_digitado
+    if codigo_digitado.strip() == "": #evita a colocar "  "
+        st.error("Digite o código do caso.")
 
-    st.success("Dados do caso salvos.")
+    elif idade_digitada is None:
+        st.error("Digite a idade.")
 
-st.write(st.session_state["dados_caso"])
+    elif sexo_digitado is None:
+        st.error("Selecione o sexo.")
+
+    else:
+        st.session_state["dados_caso"]["codigo"] = codigo_digitado.strip()
+        st.session_state["dados_caso"]["idade"] = idade_digitada
+        st.session_state["dados_caso"]["sexo"] = sexo_digitado
+
+        st.success("Dados do caso salvos.")
+    st.write(st.session_state["dados_caso"])
+
+st.divider()
+
+st.subheader("Dados clínicos")
+
+if "dados_clinicos" not in st.session_state:
+    st.session_state["dados_clinicos"] = {
+        "peso": None,
+        "altura": None,
+        "cintura": None,
+        "imc": None
+    }
+
+with st.form("form_dados_clinicos"):
+
+    peso_digitado = st.number_input(
+        "Peso (kg):",
+        min_value=1.0,
+        max_value=300.0,
+        value=None,
+        step=0.1
+    )
+
+    altura_digitada = st.number_input(
+        "Altura (m):",
+        min_value=0.5,
+        max_value=2.5,
+        value=None,
+        step=0.01
+    )
+
+    cintura_digitada = st.number_input(
+        "Circunferência da cintura (cm):",
+        min_value=20.0,
+        max_value=250.0,
+        value=None,
+        step=0.1
+    )
+
+    salvar_clinicos = st.form_submit_button(
+        "Salvar dados clínicos"
+    )
+
+
+if salvar_clinicos:
+
+    if peso_digitado is None:
+        st.error("Digite o peso.")
+
+    elif altura_digitada is None:
+        st.error("Digite a altura.")
+
+    elif cintura_digitada is None:
+        st.error("Digite a circunferência da cintura.")
+
+    else:
+        imc = round(
+            peso_digitado / (altura_digitada ** 2),
+            2
+        )
+
+        st.session_state["dados_clinicos"]["peso"] = peso_digitado
+        st.session_state["dados_clinicos"]["altura"] = altura_digitada
+        st.session_state["dados_clinicos"]["cintura"] = cintura_digitada
+        st.session_state["dados_clinicos"]["imc"] = imc
+
+        st.success("Dados clínicos salvos.")
+
+
+st.write(
+    "Dados clínicos salvos:",
+    st.session_state["dados_clinicos"]
+)
