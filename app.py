@@ -60,15 +60,14 @@ if st.button("Zerar contador"):
     st.divider()
 st.subheader("Primeiro estado de uma avaliação")
 
-
-if "avaliacao" not in st.session_state:
+#resultados
+if "avaliacao" not in st.session_state: 
     st.session_state["avaliacao"] = {
         "periodontal": None,
         "findrisc": None,
         "interheart": None,
         "pbl": None
     }
-
 
 st.write(st.session_state["avaliacao"])
 
@@ -96,3 +95,49 @@ if st.button("Apagar %PBL"):
     st.session_state["avaliacao"]["pbl"] = 0
     st.rerun()
 
+#inputs
+if "dados_caso" not in st.session_state: 
+    st.session_state["dados_caso"] = {
+        "codigo": None,
+        "idade": None,
+        "sexo": None
+    }
+
+
+st.subheader("Dados do caso")
+
+with st.form("form_dados_caso"): #tudo dentro do with fica armazenado dentro do formulario
+
+    codigo_digitado = st.text_input(
+        "Código do caso:"
+    )
+
+    idade_digitada = st.number_input(
+        "Idade:",
+        min_value=1,
+        max_value=120,
+        value=None,
+        step=1
+    )
+
+    sexo_digitado = st.selectbox(
+        "Sexo:",
+        ["Feminino", "Masculino"],
+        index=None,
+        placeholder="Selecione"
+    )
+
+    salvar_dados = st.form_submit_button(
+        "Salvar dados do caso"
+    )
+
+#coloca todos os dados do formulario dentro do dados_caso
+if salvar_dados:
+
+    st.session_state["dados_caso"]["codigo"] = codigo_digitado
+    st.session_state["dados_caso"]["idade"] = idade_digitada
+    st.session_state["dados_caso"]["sexo"] = sexo_digitado
+
+    st.success("Dados do caso salvos.")
+
+st.write(st.session_state["dados_caso"])
