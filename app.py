@@ -1846,3 +1846,147 @@ if (
         "Resultado parcial. Tabagismo e diabetes "
         "ainda serão aplicados como modificadores."
     )
+
+    # APLICA OS MODIFICADORES DO GRAU
+
+if st.button("Aplicar modificadores do grau"):
+
+    resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+
+    # Primeiro precisamos ter um grau-base calculado
+    if (
+        resultado_periodontal is None
+        or "grau_base" not in resultado_periodontal
+    ):
+
+        st.error(
+            "Calcule primeiro o grau pela progressão."
+        )
+
+
+    else:
+
+        dados_periodontais = st.session_state["dados_periodontais"]
+
+        tabagismo = st.session_state["dados_clinicos"]["tabagismo"]
+
+        cigarros_dia = st.session_state["dados_clinicos"]["cigarros_dia"]
+
+        diabetes = st.session_state["dados_clinicos"]["diabetes"]
+
+        hba1c = dados_periodontais["hba1c"]
+
+
+        # Começamos pelo grau obtido na etapa anterior
+        grau_final = resultado_periodontal["grau_base"]
+
+        modificadores_grau = []
+
+
+        # -------------------------
+        # TABAGISMO
+        # -------------------------
+
+        if tabagismo == "Fumante atual ou nos últimos 12 meses":
+
+            if cigarros_dia is None:
+
+                st.error(
+                    "Informe a média de cigarros por dia."
+                )
+
+            elif cigarros_dia < 10:
+
+                # Grau B não pode diminuir um Grau C
+                if grau_final == "A":
+                    grau_final = "B"
+
+                modificadores_grau.append(
+                    "Tabagismo < 10 cigarros/dia"
+                )
+
+            else:
+
+                grau_final = "C"
+
+                modificadores_grau.append(
+                    "Tabagismo ≥ 10 cigarros/dia"
+                )
+
+
+        # -------------------------
+        # DIABETES
+        # -------------------------
+
+        if diabetes == "Sim":
+
+            if hba1c is None:
+
+                st.warning(
+                    "Diabetes informado, mas sem HbA1c. "
+                    "O diabetes não modificou o grau."
+                )
+
+            elif hba1c < 7:
+
+                # Grau B não pode diminuir um Grau C
+                if grau_final == "A":
+                    grau_final = "B"
+
+                modificadores_grau.append(
+                    "Diabetes com HbA1c < 7%"
+                )
+
+            else:
+
+                grau_final = "C"
+
+                modificadores_grau.append(
+                    "Diabetes com HbA1c ≥ 7%"
+                )
+
+
+        elif diabetes == "Não sabe":
+
+            st.warning(
+                "Situação de diabetes desconhecida. "
+                "Nenhum modificador de diabetes foi aplicado."
+            )
+
+
+        # Salva o resultado final
+        resultado_periodontal["grau"] = grau_final
+
+        resultado_periodontal["modificadores_grau"] = (
+            modificadores_grau
+        )
+
+
+        st.success(
+            "Modificadores aplicados com sucesso."
+        )
+        resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+
+if (
+    resultado_periodontal is not None
+    and "grau" in resultado_periodontal
+):
+
+    st.subheader("Grau periodontal")
+
+    st.write(
+        "Grau-base:",
+        resultado_periodontal["grau_base"]
+    )
+
+    st.write(
+        "Grau final:",
+        resultado_periodontal["grau"]
+    )
+
+    st.write(
+        "Modificadores identificados:",
+        resultado_periodontal["modificadores_grau"]
+    )
