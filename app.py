@@ -2161,4 +2161,779 @@ if (
         resultado_periodontal["classificacao_final"]
     )
 
+    st.divider()
+
+st.header("Relatório integrado")
+
+
+# Pegamos os dados principais já armazenados
+dados_caso = st.session_state["dados_caso"]
+
+resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+resultado_findrisc = st.session_state["avaliacao"]["findrisc"]
+
+resultado_interheart = st.session_state["avaliacao"]["interheart"]
+
+
+st.subheader("Identificação do caso")
+
+st.write(
+    "Código:",
+    dados_caso["codigo"]
+)
+
+st.write(
+    "Idade:",
+    dados_caso["idade"]
+)
+
+st.write(
+    "Sexo:",
+    dados_caso["sexo"]
+)
+
+
+st.subheader("Resumo dos resultados")
+
+
+# CLASSIFICAÇÃO PERIODONTAL
+
+if (
+    resultado_periodontal is not None
+    and "classificacao_final" in resultado_periodontal
+):
+
+    st.write(
+        "Classificação periodontal:",
+        resultado_periodontal["classificacao_final"]
+    )
+
+else:
+
+    st.write(
+        "Classificação periodontal: ainda não concluída."
+    )
+
+
+# FINDRISC
+
+if resultado_findrisc is not None:
+
+    st.write(
+        "FINDRISC:",
+        resultado_findrisc["pontos"],
+        "pontos —",
+        resultado_findrisc["classificacao"]
+    )
+
+else:
+
+    st.write(
+        "FINDRISC: ainda não calculado."
+    )
+
+
+# INTERHEART
+
+if resultado_interheart is not None:
+
+    st.write(
+        "INTERHEART:",
+        resultado_interheart["pontos"],
+        "pontos —",
+        resultado_interheart["classificacao"]
+    )
+
+else:
+
+    st.write(
+        "INTERHEART: ainda não calculado."
+    )
+# DETALHAMENTO DOS RESULTADOS
+
+st.subheader("Detalhamento periodontal")
+
+
+if resultado_periodontal is not None:
+
+    if "estagio" in resultado_periodontal:
+
+        st.write(
+            "Estágio final:",
+            resultado_periodontal["estagio"]
+        )
+
+
+    if "criterio_severidade" in resultado_periodontal:
+
+        st.write(
+            "Critério principal de severidade:",
+            resultado_periodontal["criterio_severidade"]
+        )
+
+
+    if "extensao_distribuicao" in resultado_periodontal:
+
+        st.write(
+            "Extensão/distribuição:",
+            resultado_periodontal["extensao_distribuicao"]
+        )
+
+
+    if "grau" in resultado_periodontal:
+
+        st.write(
+            "Grau final:",
+            resultado_periodontal["grau"]
+        )
+
+
+    if "criterio_grau_base" in resultado_periodontal:
+
+        st.write(
+            "Critério utilizado para o grau-base:",
+            resultado_periodontal["criterio_grau_base"]
+        )
+
+else:
+
+    st.write(
+        "Ainda não existem resultados periodontais."
+    )
+
+
+# %PBL
+
+pbl = st.session_state["avaliacao"]["pbl"]
+
+
+if pbl is not None:
+
+    st.write(
+        "Perda óssea radiográfica (%PBL):",
+        pbl,
+        "%"
+    )
+
+else:
+
+    st.write(
+        "Perda óssea radiográfica (%PBL): não informada."
+    )
+
+
+# Fatores de complexidade
+
+if (
+    resultado_periodontal is not None
+    and "fatores_complexidade" in resultado_periodontal
+):
+
+    fatores = resultado_periodontal["fatores_complexidade"]
+
+    if len(fatores) > 0:
+
+        st.write(
+            "Fatores de complexidade identificados:"
+        )
+
+        for fator in fatores:
+            st.write("-", fator)
+
+    else:
+
+        st.write(
+            "Fatores de complexidade identificados: nenhum."
+        )
+
+
+# Modificadores do grau
+
+if (
+    resultado_periodontal is not None
+    and "modificadores_grau" in resultado_periodontal
+):
+
+    modificadores = resultado_periodontal["modificadores_grau"]
+
+    if len(modificadores) > 0:
+
+        st.write(
+            "Modificadores do grau identificados:"
+        )
+
+        for modificador in modificadores:
+            st.write("-", modificador)
+
+    else:
+
+        st.write(
+            "Modificadores do grau identificados: nenhum."
+        )
+
+
+# Relação %PBL / idade
+
+if (
+    resultado_periodontal is not None
+    and "razao_pbl_idade" in resultado_periodontal
+    and resultado_periodontal["razao_pbl_idade"] is not None
+):
+
+    st.write(
+        "Relação %PBL / idade:",
+        resultado_periodontal["razao_pbl_idade"]
+    )
+
+
+# FINDRISC
+
+st.subheader("Detalhamento FINDRISC")
+
+
+if resultado_findrisc is not None:
+
+    st.write(
+        "Pontuação:",
+        resultado_findrisc["pontos"]
+    )
+
+    st.write(
+        "Classificação:",
+        resultado_findrisc["classificacao"]
+    )
+
+    st.write(
+        "Risco estimado em 10 anos:",
+        resultado_findrisc["estimativa"]
+    )
+
+else:
+
+    st.write(
+        "FINDRISC ainda não calculado."
+    )
+
+
+# INTERHEART
+
+st.subheader("Detalhamento INTERHEART")
+
+
+if resultado_interheart is not None:
+
+    st.write(
+        "Pontuação:",
+        resultado_interheart["pontos"]
+    )
+
+    st.write(
+        "Classificação:",
+        resultado_interheart["classificacao"]
+    )
+
+    st.write(
+        "Relação cintura-quadril:",
+        resultado_interheart["rcq"]
+    )
+
+else:
+
+    st.write(
+        "INTERHEART ainda não calculado."
+    )
+
+
+# DADOS UTILIZADOS NO RELATÓRIO
+
+st.subheader("Dados utilizados")
+
+
+dados_clinicos = st.session_state["dados_clinicos"]
+
+
+with st.expander("Ver dados clínicos compartilhados"):
+
+    st.write(
+        "Peso:",
+        dados_clinicos["peso"],
+        "kg"
+    )
+
+    st.write(
+        "Altura:",
+        dados_clinicos["altura"],
+        "m"
+    )
+
+    st.write(
+        "IMC:",
+        dados_clinicos["imc"],
+        "kg/m²"
+    )
+
+    st.write(
+        "Circunferência da cintura:",
+        dados_clinicos["cintura"],
+        "cm"
+    )
+
+    st.write(
+        "Circunferência do quadril:",
+        dados_clinicos["quadril"],
+        "cm"
+    )
+
+    st.write(
+        "Diabetes:",
+        dados_clinicos["diabetes"]
+    )
+
+    st.write(
+        "Tabagismo:",
+        dados_clinicos["tabagismo"]
+    )
+
+
+    # Cigarros por dia só é relevante para fumantes
+    if (
+        dados_clinicos["tabagismo"]
+        == "Fumante atual ou nos últimos 12 meses"
+    ):
+
+        st.write(
+            "Média de cigarros por dia:",
+            dados_clinicos["cigarros_dia"]
+        )
     
+# DADOS ESPECÍFICOS DOS MÓDULOS
+
+
+# FINDRISC
+
+dados_findrisc = st.session_state["dados_findrisc"]
+
+
+with st.expander("Ver dados utilizados no FINDRISC"):
+
+    st.write(
+        "Atividade física:",
+        dados_findrisc["atividade_fisica"]
+    )
+
+    st.write(
+        "Consumo diário de frutas ou vegetais:",
+        dados_findrisc["frutas_vegetais"]
+    )
+
+    st.write(
+        "Uso de medicamento para pressão alta:",
+        dados_findrisc["medicacao_pressao"]
+    )
+
+    st.write(
+        "Histórico de glicemia elevada:",
+        dados_findrisc["glicemia_elevada"]
+    )
+
+    st.write(
+        "Histórico familiar de diabetes:",
+        dados_findrisc["historico_familiar"]
+    )
+
+
+# INTERHEART
+
+dados_interheart = st.session_state["dados_interheart"]
+
+
+with st.expander("Ver dados utilizados no INTERHEART"):
+
+    st.write(
+        "Hipertensão:",
+        dados_interheart["hipertensao"]
+    )
+
+    st.write(
+        "Histórico parental de infarto:",
+        dados_interheart["historico_parental_infarto"]
+    )
+
+    st.write(
+        "Estresse:",
+        dados_interheart["estresse"]
+    )
+
+    st.write(
+        "Exposição ao fumo passivo:",
+        dados_interheart["fumo_passivo"]
+    )
+
+    st.write(
+        "Atividade física no lazer:",
+        dados_interheart["atividade_lazer"]
+    )
+
+    st.write(
+        "Tristeza ou depressão:",
+        dados_interheart["tristeza_depressao"]
+    )
+
+    st.write(
+        "Consumo de alimentos salgados:",
+        dados_interheart["alimento_salgado"]
+    )
+
+    st.write(
+        "Consumo de fritura ou fast-food:",
+        dados_interheart["fritura_fast_food"]
+    )
+
+    st.write(
+        "Consumo diário de frutas:",
+        dados_interheart["fruta_diaria"]
+    )
+
+    st.write(
+        "Consumo diário de vegetais:",
+        dados_interheart["vegetais_diarios"]
+    )
+
+    st.write(
+        "Consumo de carne ou aves:",
+        dados_interheart["carne_aves"]
+    )
+
+
+# CLASSIFICAÇÃO PERIODONTAL
+
+dados_periodontais = st.session_state["dados_periodontais"]
+
+
+with st.expander(
+    "Ver dados utilizados na classificação periodontal"
+):
+
+    st.write(
+        "CAL interproximal máximo:",
+        dados_periodontais["cal"],
+        "mm"
+    )
+
+    st.write(
+        "Dentes perdidos por periodontite:",
+        dados_periodontais["dentes_perdidos"]
+    )
+
+    st.write(
+        "Profundidade máxima de sondagem:",
+        dados_periodontais["sondagem"],
+        "mm"
+    )
+
+    st.write(
+        "Perda óssea vertical máxima:",
+        dados_periodontais["perda_vertical"],
+        "mm"
+    )
+
+    st.write(
+        "Furca:",
+        dados_periodontais["furca"]
+    )
+
+    st.write(
+        "Defeito do rebordo:",
+        dados_periodontais["defeito_rebordo"]
+    )
+
+    st.write(
+        "Disfunção mastigatória:",
+        dados_periodontais["disfuncao_mastigatoria"]
+    )
+
+    st.write(
+        "Mobilidade dentária:",
+        dados_periodontais["mobilidade"]
+    )
+
+    st.write(
+        "Dentes remanescentes:",
+        dados_periodontais["dentes_remanescentes"]
+    )
+
+    st.write(
+        "Colapso de mordida:",
+        dados_periodontais["colapso_mordida"]
+    )
+
+    st.write(
+        "Migração dentária:",
+        dados_periodontais["migracao_dentaria"]
+    )
+
+    st.write(
+        "Abertura em leque:",
+        dados_periodontais["abertura_leque"]
+    )
+
+    st.write(
+        "Percentual de dentes envolvidos:",
+        dados_periodontais["percentual_dentes_envolvidos"],
+        "%"
+    )
+
+    st.write(
+        "Padrão molar/incisivo:",
+        dados_periodontais["padrao_molar_incisivo"]
+    )
+
+    st.write(
+        "Progressão periodontal em 5 anos:",
+        dados_periodontais["progressao_5_anos"],
+        "mm"
+    )
+
+    st.write(
+        "Fenótipo clínico:",
+        dados_periodontais["fenotipo"]
+    )
+
+
+    if dados_periodontais["hba1c"] is not None:
+
+        st.write(
+            "HbA1c:",
+            dados_periodontais["hba1c"],
+            "%"
+        )
+
+# SITUAÇÃO DA AVALIAÇÃO
+
+st.subheader("Situação da avaliação")
+
+
+# Lista que armazenará tudo que estiver faltando
+pendencias = []
+
+
+# Dados do caso
+
+if (
+    dados_caso["codigo"] is None
+    or dados_caso["idade"] is None
+    or dados_caso["sexo"] is None
+):
+
+    pendencias.append(
+        "Dados de identificação do caso incompletos."
+    )
+
+
+# %PBL
+
+if pbl is None:
+
+    pendencias.append(
+        "%PBL ainda não informado."
+    )
+
+
+# FINDRISC
+
+if resultado_findrisc is None:
+
+    pendencias.append(
+        "FINDRISC ainda não calculado."
+    )
+
+
+# INTERHEART
+
+if resultado_interheart is None:
+
+    pendencias.append(
+        "INTERHEART ainda não calculado."
+    )
+
+
+# Classificação periodontal
+
+if (
+    resultado_periodontal is None
+    or "classificacao_final" not in resultado_periodontal
+):
+
+    pendencias.append(
+        "Classificação periodontal ainda não concluída."
+    )
+
+
+# RESULTADO DA VERIFICAÇÃO
+
+if len(pendencias) == 0:
+
+    st.success(
+        "Avaliação completa. "
+        "Todos os resultados necessários estão disponíveis."
+    )
+
+else:
+
+    st.warning(
+        "A avaliação ainda possui pendências."
+    )
+
+    for pendencia in pendencias:
+
+        st.write(
+            "-",
+            pendencia
+        )
+# AVISOS E LIMITAÇÕES
+
+st.subheader("Avisos e limitações")
+
+
+st.info(
+    "Esta aplicação é uma ferramenta de apoio à decisão clínica "
+    "e não substitui a avaliação e a decisão do profissional."
+)
+
+
+st.write(
+    "- FINDRISC e INTERHEART são utilizados como instrumentos "
+    "de rastreamento de risco e não estabelecem diagnóstico médico."
+)
+
+
+st.write(
+    "- A classificação periodontal depende dos dados clínicos "
+    "e radiográficos informados na aplicação."
+)
+
+
+st.write(
+    "- O %PBL deve ser interpretado em conjunto com os demais "
+    "achados clínicos utilizados na classificação periodontal."
+)
+
+
+st.write(
+    "- Dados ausentes podem limitar ou impedir determinados "
+    "cálculos e classificações."
+)
+
+
+# PREPARAÇÃO DO RELATÓRIO FINAL
+
+st.subheader("Preparação do relatório final")
+
+
+if len(pendencias) == 0:
+
+    # Começamos pela identificação do caso
+    texto_relatorio = (
+        "RELATÓRIO INTEGRADO\n"
+        "\n"
+        "IDENTIFICAÇÃO DO CASO\n"
+        f"Código: {dados_caso['codigo']}\n"
+        f"Idade: {dados_caso['idade']}\n"
+        f"Sexo: {dados_caso['sexo']}\n"
+    )
+
+
+    # Resumo dos resultados
+    texto_relatorio += (
+        "\n"
+        "RESUMO DOS RESULTADOS\n"
+        f"Classificação periodontal: "
+        f"{resultado_periodontal['classificacao_final']}\n"
+        f"FINDRISC: {resultado_findrisc['pontos']} pontos - "
+        f"{resultado_findrisc['classificacao']}\n"
+        f"INTERHEART: {resultado_interheart['pontos']} pontos - "
+        f"{resultado_interheart['classificacao']}\n"
+        f"%PBL: {pbl}%\n"
+    )
+
+
+    # Classificação periodontal
+    texto_relatorio += (
+        "\n"
+        "CLASSIFICAÇÃO PERIODONTAL\n"
+        f"Estágio final: {resultado_periodontal['estagio']}\n"
+        f"Extensão/distribuição: "
+        f"{resultado_periodontal['extensao_distribuicao']}\n"
+        f"Grau final: {resultado_periodontal['grau']}\n"
+        f"Critério de severidade: "
+        f"{resultado_periodontal['criterio_severidade']}\n"
+        f"Critério do grau-base: "
+        f"{resultado_periodontal['criterio_grau_base']}\n"
+    )
+
+
+    # FINDRISC
+    texto_relatorio += (
+        "\n"
+        "FINDRISC\n"
+        f"Pontuação: {resultado_findrisc['pontos']}\n"
+        f"Classificação: {resultado_findrisc['classificacao']}\n"
+        f"Estimativa em 10 anos: "
+        f"{resultado_findrisc['estimativa']}\n"
+    )
+
+
+    # INTERHEART
+    texto_relatorio += (
+        "\n"
+        "INTERHEART\n"
+        f"Pontuação: {resultado_interheart['pontos']}\n"
+        f"Classificação: {resultado_interheart['classificacao']}\n"
+        f"Relação cintura-quadril: "
+        f"{resultado_interheart['rcq']}\n"
+    )
+
+
+    # Avisos
+    texto_relatorio += (
+        "\n"
+        "AVISOS E LIMITAÇÕES\n"
+        "- Esta aplicação é uma ferramenta de apoio à decisão clínica "
+        "e não substitui a avaliação e a decisão do profissional.\n"
+        "- FINDRISC e INTERHEART são instrumentos de rastreamento "
+        "de risco e não estabelecem diagnóstico médico.\n"
+        "- A classificação periodontal depende da qualidade "
+        "dos dados informados.\n"
+    )
+
+
+    # Mostra uma prévia
+    st.text_area(
+        "Prévia do relatório:",
+        texto_relatorio,
+        height=400
+    )
+
+
+    # DOWNLOAD DO RELATÓRIO
+
+    nome_arquivo = (
+        f"relatorio_{dados_caso['codigo']}.txt"
+    )
+
+
+    st.download_button(
+        label="Baixar relatório",
+        data=texto_relatorio,
+        file_name=nome_arquivo,
+        mime="text/plain"
+    )
+
+
+else:
+
+    st.warning(
+        "O relatório final só poderá ser preparado "
+        "quando a avaliação estiver completa."
+    )
