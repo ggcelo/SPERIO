@@ -1688,65 +1688,128 @@ if st.button("Aplicar fatores de complexidade"):
         st.success(
             "Fatores de complexidade aplicados com sucesso."
         )
+# CALCULA O GRAU-BASE PELA PROGRESSÃO
 
-        # CALCULA EXTENSÃO E DISTRIBUIÇÃO
-
-st.markdown("### Classificação da extensão e distribuição")
+st.markdown("### Classificação do grau")
 
 
-if st.button("Calcular extensão/distribuição"):
+if st.button("Calcular grau pela progressão"):
 
     dados_periodontais = st.session_state["dados_periodontais"]
 
-    percentual = dados_periodontais["percentual_dentes_envolvidos"]
+    progressao = dados_periodontais["progressao_5_anos"]
 
-    padrao_molar_incisivo = dados_periodontais[
-        "padrao_molar_incisivo"
-    ]
+    fenotipo = dados_periodontais["fenotipo"]
 
+    idade = st.session_state["dados_caso"]["idade"]
 
-    # O padrão molar/incisivo tem prioridade
-    if padrao_molar_incisivo == "Sim":
-
-        extensao_distribuicao = "Padrão molar/incisivo"
+    pbl = st.session_state["avaliacao"]["pbl"]
 
 
-    # Se não houver padrão molar/incisivo,
-    # precisamos do percentual de dentes envolvidos
-    elif percentual is None:
+    grau_base = None
 
-        st.error(
-            "Informe o percentual de dentes envolvidos "
-            "antes de calcular a extensão."
+    criterio_grau_base = None
+
+    razao_pbl_idade = None
+
+
+    # 1. Primeiro usamos a progressão direta em 5 anos
+    if progressao is not None:
+
+        if progressao == 0:
+            grau_base = "A"
+
+        elif progressao < 2:
+            grau_base = "B"
+
+        else:
+            grau_base = "C"
+
+        criterio_grau_base = "Progressão em 5 anos"
+
+
+    # 2. Se não houver progressão direta,
+    # usamos a relação %PBL / idade
+    elif pbl is not None and idade is not None:
+
+        razao_pbl_idade = round(
+            pbl / idade,
+            2
         )
 
-        extensao_distribuicao = None
+        if razao_pbl_idade < 0.25:
+            grau_base = "A"
+
+        elif razao_pbl_idade <= 1:
+            grau_base = "B"
+
+        else:
+            grau_base = "C"
+
+        criterio_grau_base = "%PBL / idade"
 
 
-    # Menos de 30% = localizada
-    elif percentual < 30:
+        # O fenótipo pode elevar a estimativa indireta
 
-        extensao_distribuicao = "Localizada"
+        if (
+            fenotipo == "Destruição proporcional ao biofilme"
+            and grau_base == "A"
+        ):
+            grau_base = "B"
+            criterio_grau_base = "%PBL / idade + fenótipo"
 
 
-    # 30% ou mais = generalizada
+        elif fenotipo == "Destruição superior à esperada":
+            grau_base = "C"
+            criterio_grau_base = "%PBL / idade + fenótipo"
+
+
+    # 3. Se não houver progressão nem %PBL/idade,
+    # tentamos usar apenas o fenótipo
+    elif fenotipo is not None:
+
+        if fenotipo == "Biofilme abundante com baixa destruição":
+            grau_base = "A"
+
+        elif fenotipo == "Destruição proporcional ao biofilme":
+            grau_base = "B"
+
+        else:
+            grau_base = "C"
+
+        criterio_grau_base = "Fenótipo"
+
+
+    # 4. Se nenhum critério estiver disponível
+    if grau_base is None:
+
+        st.warning(
+            "Não foi possível calcular o grau com "
+            "os dados de progressão disponíveis."
+        )
+
+
     else:
-
-        extensao_distribuicao = "Generalizada"
-
-
-    # Só salva se conseguimos calcular
-    if extensao_distribuicao is not None:
 
         if st.session_state["avaliacao"]["periodontal"] is None:
             st.session_state["avaliacao"]["periodontal"] = {}
 
+
         st.session_state["avaliacao"]["periodontal"][
-            "extensao_distribuicao"
-        ] = extensao_distribuicao
+            "grau_base"
+        ] = grau_base
+
+        st.session_state["avaliacao"]["periodontal"][
+            "criterio_grau_base"
+        ] = criterio_grau_base
+
+        st.session_state["avaliacao"]["periodontal"][
+            "razao_pbl_idade"
+        ] = razao_pbl_idade
+
 
         st.success(
-            "Extensão/distribuição calculada com sucesso."
+            "Grau-base calculado com sucesso."
         )
 
 
@@ -1755,11 +1818,31 @@ resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
 if (
     resultado_periodontal is not None
-    and "extensao_distribuicao" in resultado_periodontal
+    and "grau_base" in resultado_periodontal
 ):
 
+    st.subheader("Resultado parcial do grau")
+
     st.write(
-        "Extensão/distribuição:",
-        resultado_periodontal["extensao_distribuicao"]
+        "Grau-base:",
+        resultado_periodontal["grau_base"]
     )
 
+    st.write(
+        "Critério utilizado:",
+        resultado_periodontal["criterio_grau_base"]
+    )
+
+
+    if resultado_periodontal["razao_pbl_idade"] is not None:
+
+        st.write(
+            "Relação %PBL / idade:",
+            resultado_periodontal["razao_pbl_idade"]
+        )
+
+
+    st.info(
+        "Resultado parcial. Tabagismo e diabetes "
+        "ainda serão aplicados como modificadores."
+    )
