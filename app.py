@@ -1359,3 +1359,126 @@ st.write(
             st.session_state["dados_periodontais"]["hba1c"]
     }
 )
+
+#CALCULOS DE CLSSIFICAÇÃO DO ESTÁGIO - agora ficou pegado
+st.markdown("### Classificação do estágio")
+
+
+if st.button("Calcular estágio pela severidade"):
+
+    dados_periodontais = st.session_state["dados_periodontais"]
+
+    cal = dados_periodontais["cal"]
+    dentes_perdidos = dados_periodontais["dentes_perdidos"]
+
+    pbl = st.session_state["avaliacao"]["pbl"]
+
+
+    # Começamos sem estágio definido
+    estagio_severidade = None
+    criterio_severidade = None
+
+
+    # 1. CAL é o critério principal
+    if cal is not None:
+
+        if 1 <= cal < 3:
+            estagio_severidade = "I"
+
+        elif 3 <= cal < 5:
+            estagio_severidade = "II"
+
+        elif cal >= 5:
+            estagio_severidade = "III"
+
+        criterio_severidade = "CAL"
+
+
+    # 2. Se não houver CAL, usamos o %PBL
+    elif pbl is not None:
+
+        if pbl < 15:
+            estagio_severidade = "I"
+
+        elif pbl <= 33:
+            estagio_severidade = "II"
+
+        else:
+            estagio_severidade = "III"
+
+        criterio_severidade = "%PBL"
+
+
+    # 3. Perda dentária pode elevar o estágio
+    if dentes_perdidos is not None:
+
+        if dentes_perdidos >= 5:
+            estagio_severidade = "IV"
+            criterio_severidade = "Perda dentária"
+
+        elif dentes_perdidos >= 1:
+
+            if (
+                estagio_severidade is None
+                or estagio_severidade in ["I", "II"]
+            ):
+                estagio_severidade = "III"
+                criterio_severidade = "Perda dentária"
+
+
+    # 4. Verifica se foi possível determinar um estágio
+    if estagio_severidade is None:
+
+        st.warning(
+            "Não foi possível determinar o estágio "
+            "com os dados de severidade disponíveis."
+        )
+
+    else:
+
+        # Cria o dicionário de resultado periodontal,
+        # caso ele ainda esteja vazio
+        if st.session_state["avaliacao"]["periodontal"] is None:
+            st.session_state["avaliacao"]["periodontal"] = {}
+
+
+        # Salva o resultado parcial
+        st.session_state["avaliacao"]["periodontal"][
+            "estagio_severidade"
+        ] = estagio_severidade
+
+        st.session_state["avaliacao"]["periodontal"][
+            "criterio_severidade"
+        ] = criterio_severidade
+
+        st.success(
+            "Estágio pela severidade calculado com sucesso."
+        )
+resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+
+if (
+    resultado_periodontal is not None
+    and "estagio_severidade" in resultado_periodontal
+):
+
+    st.subheader("Resultado parcial do estágio")
+
+    st.write(
+        "Estágio pela severidade:",
+        resultado_periodontal["estagio_severidade"]
+    )
+
+    st.write(
+        "Critério determinante:",
+        resultado_periodontal["criterio_severidade"]
+    )
+
+    st.info(
+        "Resultado parcial. Os fatores de complexidade "
+        "ainda serão avaliados."
+    )
+
+resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+
