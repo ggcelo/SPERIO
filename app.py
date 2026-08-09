@@ -1688,6 +1688,80 @@ if st.button("Aplicar fatores de complexidade"):
         st.success(
             "Fatores de complexidade aplicados com sucesso."
         )
+
+        # CALCULA EXTENSÃO E DISTRIBUIÇÃO
+
+st.markdown("### Classificação da extensão e distribuição")
+
+
+if st.button("Calcular extensão/distribuição"):
+
+    dados_periodontais = st.session_state["dados_periodontais"]
+
+    percentual = dados_periodontais["percentual_dentes_envolvidos"]
+
+    padrao_molar_incisivo = dados_periodontais[
+        "padrao_molar_incisivo"
+    ]
+
+
+    # O padrão molar/incisivo tem prioridade
+    if padrao_molar_incisivo == "Sim":
+
+        extensao_distribuicao = "Padrão molar/incisivo"
+
+
+    # Se não houver padrão molar/incisivo,
+    # precisamos do percentual de dentes envolvidos
+    elif percentual is None:
+
+        st.error(
+            "Informe o percentual de dentes envolvidos "
+            "antes de calcular a extensão."
+        )
+
+        extensao_distribuicao = None
+
+
+    # Menos de 30% = localizada
+    elif percentual < 30:
+
+        extensao_distribuicao = "Localizada"
+
+
+    # 30% ou mais = generalizada
+    else:
+
+        extensao_distribuicao = "Generalizada"
+
+
+    # Só salva se conseguimos calcular
+    if extensao_distribuicao is not None:
+
+        if st.session_state["avaliacao"]["periodontal"] is None:
+            st.session_state["avaliacao"]["periodontal"] = {}
+
+        st.session_state["avaliacao"]["periodontal"][
+            "extensao_distribuicao"
+        ] = extensao_distribuicao
+
+        st.success(
+            "Extensão/distribuição calculada com sucesso."
+        )
+
+
+resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+
+if (
+    resultado_periodontal is not None
+    and "extensao_distribuicao" in resultado_periodontal
+):
+
+    st.write(
+        "Extensão/distribuição:",
+        resultado_periodontal["extensao_distribuicao"]
+    )
 # CALCULA O GRAU-BASE PELA PROGRESSÃO
 
 st.markdown("### Classificação do grau")
@@ -1990,3 +2064,101 @@ if (
         "Modificadores identificados:",
         resultado_periodontal["modificadores_grau"]
     )
+    # CONSOLIDA A CLASSIFICAÇÃO PERIODONTAL FINAL
+
+st.markdown("### Classificação periodontal final")
+
+
+if st.button("Gerar classificação periodontal final"):
+
+    resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+
+    # Verifica se existe resultado periodontal
+    if resultado_periodontal is None:
+
+        st.error(
+            "Ainda não há resultados periodontais calculados."
+        )
+
+
+    # Verifica se o estágio final já foi calculado
+    elif "estagio" not in resultado_periodontal:
+
+        st.error(
+            "Calcule primeiro o estágio periodontal final."
+        )
+
+
+    # Verifica se a extensão/distribuição já foi calculada
+    elif "extensao_distribuicao" not in resultado_periodontal:
+
+        st.error(
+            "Calcule primeiro a extensão/distribuição."
+        )
+
+
+    # Verifica se o grau final já foi calculado
+    elif "grau" not in resultado_periodontal:
+
+        st.error(
+            "Calcule primeiro o grau periodontal final."
+        )
+
+
+    else:
+
+        estagio = resultado_periodontal["estagio"]
+
+        extensao = resultado_periodontal[
+            "extensao_distribuicao"
+        ]
+
+        grau = resultado_periodontal["grau"]
+
+
+        classificacao_final = (
+            f"Periodontite Estágio {estagio}, "
+            f"{extensao}, "
+            f"Grau {grau}"
+        )
+
+
+        resultado_periodontal[
+            "classificacao_final"
+        ] = classificacao_final
+
+
+        st.success(
+            "Classificação periodontal final gerada com sucesso."
+        )
+        resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+
+if (
+    resultado_periodontal is not None
+    and "classificacao_final" in resultado_periodontal
+):
+
+    st.subheader("Resultado periodontal final")
+
+    st.write(
+        "Estágio:",
+        resultado_periodontal["estagio"]
+    )
+
+    st.write(
+        "Extensão/distribuição:",
+        resultado_periodontal["extensao_distribuicao"]
+    )
+
+    st.write(
+        "Grau:",
+        resultado_periodontal["grau"]
+    )
+
+    st.success(
+        resultado_periodontal["classificacao_final"]
+    )
+
+    
