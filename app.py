@@ -1688,3 +1688,78 @@ if st.button("Aplicar fatores de complexidade"):
         st.success(
             "Fatores de complexidade aplicados com sucesso."
         )
+
+        # CALCULA EXTENSÃO E DISTRIBUIÇÃO
+
+st.markdown("### Classificação da extensão e distribuição")
+
+
+if st.button("Calcular extensão/distribuição"):
+
+    dados_periodontais = st.session_state["dados_periodontais"]
+
+    percentual = dados_periodontais["percentual_dentes_envolvidos"]
+
+    padrao_molar_incisivo = dados_periodontais[
+        "padrao_molar_incisivo"
+    ]
+
+
+    # O padrão molar/incisivo tem prioridade
+    if padrao_molar_incisivo == "Sim":
+
+        extensao_distribuicao = "Padrão molar/incisivo"
+
+
+    # Se não houver padrão molar/incisivo,
+    # precisamos do percentual de dentes envolvidos
+    elif percentual is None:
+
+        st.error(
+            "Informe o percentual de dentes envolvidos "
+            "antes de calcular a extensão."
+        )
+
+        extensao_distribuicao = None
+
+
+    # Menos de 30% = localizada
+    elif percentual < 30:
+
+        extensao_distribuicao = "Localizada"
+
+
+    # 30% ou mais = generalizada
+    else:
+
+        extensao_distribuicao = "Generalizada"
+
+
+    # Só salva se conseguimos calcular
+    if extensao_distribuicao is not None:
+
+        if st.session_state["avaliacao"]["periodontal"] is None:
+            st.session_state["avaliacao"]["periodontal"] = {}
+
+        st.session_state["avaliacao"]["periodontal"][
+            "extensao_distribuicao"
+        ] = extensao_distribuicao
+
+        st.success(
+            "Extensão/distribuição calculada com sucesso."
+        )
+
+
+resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+
+if (
+    resultado_periodontal is not None
+    and "extensao_distribuicao" in resultado_periodontal
+):
+
+    st.write(
+        "Extensão/distribuição:",
+        resultado_periodontal["extensao_distribuicao"]
+    )
+
