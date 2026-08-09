@@ -1482,3 +1482,209 @@ if (
 resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
 
+if (
+    resultado_periodontal is not None
+    and "estagio" in resultado_periodontal
+):
+
+    st.subheader("Estágio periodontal")
+
+    st.write(
+        "Estágio pela severidade:",
+        resultado_periodontal["estagio_severidade"]
+    )
+
+    st.write(
+        "Estágio final:",
+        resultado_periodontal["estagio"]
+    )
+
+    st.write(
+        "Fatores de complexidade identificados:",
+        resultado_periodontal["fatores_complexidade"]
+    )
+
+#APLICA FATORES DE COMPLEXIDADES
+if st.button("Aplicar fatores de complexidade"):
+
+    resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
+
+    if (
+        resultado_periodontal is None
+        or "estagio_severidade" not in resultado_periodontal
+    ):
+        st.error(
+            "Calcule primeiro o estágio pela severidade."
+        )
+
+    else:
+
+        dados_periodontais = st.session_state["dados_periodontais"]
+
+        estagio_final = resultado_periodontal["estagio_severidade"]
+
+        fatores_complexidade = []
+
+
+        # Profundidade de sondagem
+        sondagem = dados_periodontais["sondagem"]
+
+        if sondagem is not None:
+
+            if sondagem >= 6:
+
+                if estagio_final in ["I", "II"]:
+                    estagio_final = "III"
+
+                fatores_complexidade.append(
+                    "Profundidade de sondagem ≥ 6 mm"
+                )
+
+            elif sondagem > 4:
+
+                if estagio_final == "I":
+                    estagio_final = "II"
+
+                fatores_complexidade.append(
+                    "Profundidade de sondagem > 4 mm"
+                )
+
+
+        # Perda óssea vertical
+        perda_vertical = dados_periodontais["perda_vertical"]
+
+        if (
+            perda_vertical is not None
+            and perda_vertical >= 3
+        ):
+
+            if estagio_final in ["I", "II"]:
+                estagio_final = "III"
+
+            fatores_complexidade.append(
+                "Perda óssea vertical ≥ 3 mm"
+            )
+
+
+        # Furca
+        furca = dados_periodontais["furca"]
+
+        if furca in ["II", "III"]:
+
+            if estagio_final in ["I", "II"]:
+                estagio_final = "III"
+
+            fatores_complexidade.append(
+                "Envolvimento de furca classe II ou III"
+            )
+
+
+        # Defeito do rebordo
+        defeito_rebordo = dados_periodontais["defeito_rebordo"]
+
+        if defeito_rebordo == "Moderado":
+
+            if estagio_final in ["I", "II"]:
+                estagio_final = "III"
+
+            fatores_complexidade.append(
+                "Defeito moderado de rebordo"
+            )
+
+        elif defeito_rebordo == "Grave":
+
+            estagio_final = "IV"
+
+            fatores_complexidade.append(
+                "Defeito grave de rebordo"
+            )
+
+
+        # Disfunção mastigatória
+        if (
+            dados_periodontais["disfuncao_mastigatoria"]
+            == "Sim"
+        ):
+
+            estagio_final = "IV"
+
+            fatores_complexidade.append(
+                "Disfunção mastigatória"
+            )
+
+
+        # Mobilidade
+        mobilidade = dados_periodontais["mobilidade"]
+
+        if mobilidade in ["II", "III"]:
+
+            estagio_final = "IV"
+
+            fatores_complexidade.append(
+                "Mobilidade dentária grau II ou III"
+            )
+
+
+        # Colapso de mordida
+        if dados_periodontais["colapso_mordida"] == "Sim":
+
+            estagio_final = "IV"
+
+            fatores_complexidade.append(
+                "Colapso de mordida"
+            )
+
+
+        # Migração dentária
+        if dados_periodontais["migracao_dentaria"] == "Sim":
+
+            estagio_final = "IV"
+
+            fatores_complexidade.append(
+                "Migração dentária"
+            )
+
+
+        # Abertura em leque
+        if dados_periodontais["abertura_leque"] == "Sim":
+
+            estagio_final = "IV"
+
+            fatores_complexidade.append(
+                "Abertura em leque"
+            )
+
+
+        # Dentição reduzida
+        dentes_remanescentes = (
+            dados_periodontais["dentes_remanescentes"]
+        )
+
+        dentes_perdidos = (
+            dados_periodontais["dentes_perdidos"]
+        )
+
+        if (
+            dentes_remanescentes is not None
+            and dentes_remanescentes < 20
+            and dentes_perdidos is not None
+            and dentes_perdidos > 0
+        ):
+
+            estagio_final = "IV"
+
+            fatores_complexidade.append(
+                "Menos de 20 dentes remanescentes"
+            )
+
+
+        # Salva o estágio final
+        resultado_periodontal["estagio"] = estagio_final
+
+        resultado_periodontal["fatores_complexidade"] = (
+            fatores_complexidade
+        )
+
+        st.success(
+            "Fatores de complexidade aplicados com sucesso."
+        )
