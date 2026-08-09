@@ -1,5 +1,5 @@
 import streamlit as st
-
+from html import escape
 
 st.set_page_config(
     page_title="Apoio à Decisão em Periodontia",
@@ -2928,6 +2928,49 @@ if len(pendencias) == 0:
         data=texto_relatorio,
         file_name=nome_arquivo,
         mime="text/plain"
+    )
+
+    # RELATÓRIO EM HTML
+
+
+    # Prepara o texto para ser usado com segurança dentro do HTML
+    texto_seguro = escape(texto_relatorio)
+
+
+    # Cria a estrutura básica da página
+    html_relatorio = f"""
+    <!DOCTYPE html>
+
+    <html>
+
+    <head>
+        <meta charset="UTF-8">
+
+        <title>Relatório integrado</title>
+    </head>
+
+    <body>
+
+    <pre>{texto_seguro}</pre>
+
+    </body>
+
+    </html>
+    """
+
+
+    # Nome do arquivo
+    nome_arquivo_html = (
+        f"relatorio_{dados_caso['codigo']}.html"
+    )
+
+
+    # Botão de download
+    st.download_button(
+        label="Baixar relatório para impressão",
+        data=html_relatorio,
+        file_name=nome_arquivo_html,
+        mime="text/html"
     )
 
 
