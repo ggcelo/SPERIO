@@ -1,6 +1,20 @@
+import torch
+
 import streamlit as st
 from html import escape
 from datetime import datetime
+from pathlib import Path
+from io import BytesIO
+from PIL import Image
+from ultralytics import YOLO
+
+pasta_projeto = Path(__file__).parent
+
+caminho_modelo = (
+    pasta_projeto
+    / "models"
+    / "perio_kpt_7kpt_fold0_best.pt"
+)
 
 st.set_page_config(
     page_title="Apoio à Decisão em Periodontia",
@@ -8,6 +22,16 @@ st.set_page_config(
     layout="wide"
 )
 
+#CARREGA O MODELO E O SALVA NO CACHE DO STREAMLIT (doc recomenda)
+@st.cache_resource
+def carregar_modelo_radiografico(caminho):
+
+    modelo = YOLO(
+        caminho,
+        task="pose"
+    )
+
+    return modelo
 
 st.title("Aplicação de Apoio à Decisão Clínica em Periodontia")
 
@@ -30,6 +54,140 @@ modulo = st.selectbox(
 )
 
 st.write("Módulo selecionado:", modulo)
+
+# DICIONÁRIO DO MÓDULO RADIOGRÁFICO
+if "dados_radiograficos" not in st.session_state:
+    st.session_state["dados_radiograficos"] = {
+        "nome_arquivo": None,
+        "imagem_bytes": None,
+        "resultados_dentes": [],
+        "pbl_maximo": None,
+        "dente_determinante": None,
+        "superficie_determinante": None,
+        "confirmado": False
+    }
+st.write(st.session_state["dados_radiograficos"])
+
+# MÓDULO RADIOGRÁFICO
+
+if modulo == "Análise radiográfica":
+
+    st.header("Análise radiográfica")
+
+    st.write(
+        "Envie uma radiografia periapical para análise."
+    )
+
+
+    # Verifica se o arquivo do modelo existe
+
+    if caminho_modelo.exists():
+
+        st.success(
+            "Modelo radiográfico encontrado."
+        )
+
+        try: #caso ache o caminho onde está, tente carregar o modelo
+
+            modelo_radiografico = carregar_modelo_radiografico( #modelo_radiografico recebe o retorno 'modelo'
+                str(caminho_modelo) #transforma em string pela compatibilidade, nao se pode usar path
+            )
+
+            st.success(
+                "Modelo radiográfico carregado com sucesso."
+            )
+
+        except Exception as erro:
+
+            st.error(
+                "O modelo radiográfico não pôde ser carregado."
+            )
+
+            st.write(
+                "Erro:",
+                str(erro)
+            )
+
+    else:
+
+        st.error(
+            "Modelo radiográfico não encontrado."
+        )
+
+        st.write(
+            "Caminho esperado:",
+            str(caminho_modelo)
+        )
+
+
+    imagem_radiografica = st.file_uploader(
+        "Selecione a radiografia:",
+        type=["png", "jpg", "jpeg"]
+    )
+
+
+    if imagem_radiografica is not None:
+
+        nome_novo_arquivo = imagem_radiografica.name
+
+        nome_arquivo_anterior = (
+            st.session_state["dados_radiograficos"]["nome_arquivo"]
+        )
+
+
+        # Se foi enviada uma imagem diferente,
+        # limpamos resultados da imagem anterior
+        if nome_novo_arquivo != nome_arquivo_anterior:
+
+            st.session_state["dados_radiograficos"][
+                "resultados_dentes"
+            ] = []
+
+            st.session_state["dados_radiograficos"][
+                "pbl_maximo"
+            ] = None
+
+            st.session_state["dados_radiograficos"][
+                "dente_determinante"
+            ] = None
+
+            st.session_state["dados_radiograficos"][
+                "superficie_determinante"
+            ] = None
+
+            st.session_state["dados_radiograficos"][
+                "confirmado"
+            ] = False
+
+
+        # Guarda o nome do arquivo
+        st.session_state["dados_radiograficos"][
+            "nome_arquivo"
+        ] = nome_novo_arquivo
+
+
+        # Guarda o conteúdo da imagem
+        st.session_state["dados_radiograficos"][
+            "imagem_bytes"
+        ] = imagem_radiografica.getvalue()
+
+
+        # Mostra a imagem
+        st.image(
+            imagem_radiografica,
+            caption="Radiografia selecionada"
+        )
+
+
+        st.success(
+            "Radiografia carregada e armazenada com sucesso."
+        )
+
+
+        st.write(
+            "Arquivo armazenado:",
+            st.session_state["dados_radiograficos"]["nome_arquivo"]
+        )
 
 
 st.divider()
@@ -72,6 +230,7 @@ if "avaliacao" not in st.session_state:
     }
 
 st.write(st.session_state["avaliacao"])
+
 
 pbl_digitado = st.number_input(
     "Digite um %PBL de teste:",
