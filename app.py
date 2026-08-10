@@ -1,5 +1,6 @@
 import streamlit as st
 from html import escape
+from datetime import datetime
 
 st.set_page_config(
     page_title="Apoio à Decisão em Periodontia",
@@ -2832,6 +2833,41 @@ st.subheader("Preparação do relatório final")
 
 
 if len(pendencias) == 0:
+    
+    data_hora_relatorio = datetime.now().strftime(
+        "%d/%m/%Y %H:%M"
+    )
+
+    # Prepara os fatores de complexidade para o relatório
+    fatores_complexidade = resultado_periodontal[
+        "fatores_complexidade"
+    ]
+
+    if len(fatores_complexidade) > 0:
+
+        fatores_texto = ", ".join(
+            fatores_complexidade
+        )
+
+    else:
+
+        fatores_texto = "Nenhum"
+
+
+    # Prepara os modificadores do grau para o relatório
+    modificadores_grau = resultado_periodontal[
+        "modificadores_grau"
+    ]
+
+    if len(modificadores_grau) > 0:
+
+        modificadores_texto = ", ".join(
+            modificadores_grau
+        )
+
+    else:
+
+        modificadores_texto = "Nenhum"
 
     # Começamos pela identificação do caso
     texto_relatorio = (
@@ -2870,7 +2906,16 @@ if len(pendencias) == 0:
         f"{resultado_periodontal['criterio_severidade']}\n"
         f"Critério do grau-base: "
         f"{resultado_periodontal['criterio_grau_base']}\n"
+        f"Fatores de complexidade: {fatores_texto}\n"
+        f"Modificadores do grau: {modificadores_texto}\n"
     )
+
+    if resultado_periodontal["razao_pbl_idade"] is not None:
+
+        texto_relatorio += (
+            f"Relação %PBL / idade: "
+            f"{resultado_periodontal['razao_pbl_idade']}\n"
+        )
 
 
     # FINDRISC
@@ -2883,6 +2928,44 @@ if len(pendencias) == 0:
         f"{resultado_findrisc['estimativa']}\n"
     )
 
+    texto_relatorio += (
+        "\n"
+        "DADOS CLÍNICOS UTILIZADOS\n"
+        f"Peso: {dados_clinicos['peso']} kg\n"
+        f"Altura: {dados_clinicos['altura']} m\n"
+        f"IMC: {dados_clinicos['imc']} kg/m²\n"
+        f"Cintura: {dados_clinicos['cintura']} cm\n"
+        f"Quadril: {dados_clinicos['quadril']} cm\n"
+        f"Diabetes: {dados_clinicos['diabetes']}\n"
+        f"Tabagismo: {dados_clinicos['tabagismo']}\n"
+    )
+
+    if (
+        dados_clinicos["tabagismo"]
+        == "Fumante atual ou nos últimos 12 meses"
+    ):
+
+        texto_relatorio += (
+            f"Média de cigarros por dia: "
+            f"{dados_clinicos['cigarros_dia']}\n"
+        )
+        
+    texto_relatorio += (
+        "\n"
+        "DADOS UTILIZADOS NO FINDRISC\n"
+        f"Atividade física: "
+        f"{dados_findrisc['atividade_fisica']}\n"
+        f"Frutas ou vegetais diariamente: "
+        f"{dados_findrisc['frutas_vegetais']}\n"
+        f"Medicamento para pressão alta: "
+        f"{dados_findrisc['medicacao_pressao']}\n"
+        f"Glicemia elevada: "
+        f"{dados_findrisc['glicemia_elevada']}\n"
+        f"Histórico familiar de diabetes: "
+        f"{dados_findrisc['historico_familiar']}\n"
+    )
+
+
 
     # INTERHEART
     texto_relatorio += (
@@ -2894,6 +2977,45 @@ if len(pendencias) == 0:
         f"{resultado_interheart['rcq']}\n"
     )
 
+    texto_relatorio += (
+        "\n"
+        "DADOS UTILIZADOS NA CLASSIFICAÇÃO PERIODONTAL\n"
+        f"CAL máximo: {dados_periodontais['cal']} mm\n"
+        f"%PBL: {pbl}%\n"
+        f"Dentes perdidos por periodontite: "
+        f"{dados_periodontais['dentes_perdidos']}\n"
+        f"Profundidade máxima de sondagem: "
+        f"{dados_periodontais['sondagem']} mm\n"
+        f"Perda óssea vertical máxima: "
+        f"{dados_periodontais['perda_vertical']} mm\n"
+        f"Furca: {dados_periodontais['furca']}\n"
+        f"Defeito do rebordo: "
+        f"{dados_periodontais['defeito_rebordo']}\n"
+        f"Disfunção mastigatória: "
+        f"{dados_periodontais['disfuncao_mastigatoria']}\n"
+        f"Mobilidade: {dados_periodontais['mobilidade']}\n"
+        f"Dentes remanescentes: "
+        f"{dados_periodontais['dentes_remanescentes']}\n"
+        f"Colapso de mordida: "
+        f"{dados_periodontais['colapso_mordida']}\n"
+        f"Migração dentária: "
+        f"{dados_periodontais['migracao_dentaria']}\n"
+        f"Abertura em leque: "
+        f"{dados_periodontais['abertura_leque']}\n"
+        f"Percentual de dentes envolvidos: "
+        f"{dados_periodontais['percentual_dentes_envolvidos']}%\n"
+        f"Padrão molar/incisivo: "
+        f"{dados_periodontais['padrao_molar_incisivo']}\n"
+        f"Progressão em 5 anos: "
+        f"{dados_periodontais['progressao_5_anos']} mm\n"
+        f"Fenótipo: {dados_periodontais['fenotipo']}\n"
+    )
+
+    if dados_periodontais["hba1c"] is not None:
+
+        texto_relatorio += (
+            f"HbA1c: {dados_periodontais['hba1c']}%\n"
+        )
 
     # Avisos
     texto_relatorio += (
@@ -2905,6 +3027,14 @@ if len(pendencias) == 0:
         "de risco e não estabelecem diagnóstico médico.\n"
         "- A classificação periodontal depende da qualidade "
         "dos dados informados.\n"
+    )
+
+    texto_relatorio += (
+    "\n"
+    "IDENTIFICAÇÃO DO RELATÓRIO\n"
+    f"Caso: {dados_caso['codigo']}\n"
+    f"Gerado em: {data_hora_relatorio}\n"
+    "Aplicação: Apoio à Decisão Clínica em Periodontia\n"
     )
 
 
@@ -2933,25 +3063,81 @@ if len(pendencias) == 0:
     # RELATÓRIO EM HTML
 
 
-    # Prepara o texto para ser usado com segurança dentro do HTML
-    texto_seguro = escape(texto_relatorio)
+    
+        # Retira o primeiro título do texto,
+    # pois o HTML já terá seu próprio título
+    texto_html = texto_relatorio.replace(
+        "RELATÓRIO INTEGRADO\n\n",
+        "",
+        1
+    )
 
 
-    # Cria a estrutura básica da página
+    # Prepara o texto para ser usado com segurança no HTML
+    texto_seguro = escape(texto_html)
+
+
+    # Cria o HTML formatado
     html_relatorio = f"""
     <!DOCTYPE html>
 
     <html>
 
     <head>
+
         <meta charset="UTF-8">
 
         <title>Relatório integrado</title>
+
+        <style>
+
+            @page {{
+                size: A4;
+                margin: 20mm;
+            }}
+
+
+            body {{
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 40px auto;
+                color: #222222;
+            }}
+
+
+            h1 {{
+                text-align: center;
+                margin-bottom: 30px;
+            }}
+
+
+            pre {{
+                font-family: Arial, sans-serif;
+                font-size: 15px;
+                line-height: 1.6;
+                white-space: pre-wrap;
+            }}
+
+
+            @media print {{
+
+                body {{
+                    max-width: none;
+                    margin: 0;
+                }}
+
+            }}
+
+        </style>
+
     </head>
+
 
     <body>
 
-    <pre>{texto_seguro}</pre>
+        <h1>Relatório Integrado</h1>
+
+        <pre>{texto_seguro}</pre>
 
     </body>
 
