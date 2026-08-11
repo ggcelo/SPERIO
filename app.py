@@ -253,6 +253,16 @@ modulo = st.selectbox(
 
 st.write("Módulo selecionado:", modulo)
 
+#DICIONÁRIO DOS RESULTADOS
+
+if "avaliacao" not in st.session_state: 
+    st.session_state["avaliacao"] = {
+        "periodontal": None,
+        "findrisc": None,
+        "interheart": None,
+        "pbl": None
+    }
+
 # DICIONÁRIO DO MÓDULO RADIOGRÁFICO
 if "dados_radiograficos" not in st.session_state:
     st.session_state["dados_radiograficos"] = {
@@ -817,11 +827,98 @@ if modulo == "Análise radiográfica":
                             ] = resultados_dentes_analise
 
                             st.write(
-                                "Resultados dos dentes:",
-                                st.session_state[
+                                "Resultados dos dentes:", #mostra o resultado da lista dos dados adquiridos no modulo radiografico
+                                st.session_state[         #cada item da lista contem um dicionario com resultado_dente 
                                     "dados_radiograficos"
                                 ]["resultados_dentes"]
                             )
+
+                            # -------------------------
+                            # PROCURA O MAIOR %PBL DA RADIOGRAFIA
+                            # -------------------------
+
+                            pbl_maximo_analise = None
+
+                            dente_determinante_analise = None
+
+                            superficie_determinante_analise = None
+
+
+                            for resultado_dente in resultados_dentes_analise:
+
+                                # -------------------------
+                                # SUPERFÍCIE MESIAL
+                                # -------------------------
+
+                                pbl_mesial_dente = resultado_dente[
+                                    "pbl_mesial"
+                                ]
+
+
+                                if pbl_mesial_dente is not None:
+
+                                    if (
+                                        pbl_maximo_analise is None
+                                        or pbl_mesial_dente > pbl_maximo_analise
+                                    ):
+
+                                        pbl_maximo_analise = pbl_mesial_dente
+
+                                        dente_determinante_analise = resultado_dente[
+                                            "numero_objeto"
+                                        ]
+
+                                        superficie_determinante_analise = "mesial"
+
+
+                                # -------------------------
+                                # SUPERFÍCIE DISTAL
+                                # -------------------------
+
+                                pbl_distal_dente = resultado_dente[
+                                    "pbl_distal"
+                                ]
+
+
+                                if pbl_distal_dente is not None:
+
+                                    if (
+                                        pbl_maximo_analise is None
+                                        or pbl_distal_dente > pbl_maximo_analise
+                                    ):
+
+                                        pbl_maximo_analise = pbl_distal_dente
+
+                                        dente_determinante_analise = resultado_dente[
+                                            "numero_objeto"
+                                        ]
+
+
+                                        superficie_determinante_analise = "distal"
+
+                            #MOSTRA VAORES DE PBL E O QUE DETERMINOU
+                            if pbl_maximo_analise is None:
+
+                                st.warning(
+                                    "Nenhum %PBL válido pôde ser calculado."
+                                )
+
+                            else:
+
+                                st.write(
+                                    "Maior %PBL encontrado:",
+                                    f"{pbl_maximo_analise:.2f}%"
+                                )
+
+                                st.write(
+                                    "Objeto determinante:",
+                                    dente_determinante_analise
+                                )
+
+                                st.write(
+                                    "Superfície determinante:",
+                                    superficie_determinante_analise
+                                )
 
                 except Exception as erro:
 
@@ -864,15 +961,7 @@ if st.button("Zerar contador"):
 st.divider()
 st.subheader("Primeiro estado de uma avaliação")
 
-#DICIONÁRIO DOS RESULTADOS
 
-if "avaliacao" not in st.session_state: 
-    st.session_state["avaliacao"] = {
-        "periodontal": None,
-        "findrisc": None,
-        "interheart": None,
-        "pbl": None
-    }
 
 st.write(st.session_state["avaliacao"])
 
