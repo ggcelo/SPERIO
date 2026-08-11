@@ -272,7 +272,8 @@ if "dados_radiograficos" not in st.session_state:
         "pbl_maximo": None,
         "dente_determinante": None,
         "superficie_determinante": None,
-        "confirmado": False
+        "confirmado": False,
+        "imagem_anotada_bytes": None
     }
 st.write(st.session_state["dados_radiograficos"])
 
@@ -366,6 +367,10 @@ if modulo == "Análise radiográfica":
             st.session_state["dados_radiograficos"][
                 "confirmado"
             ] = False
+
+            st.session_state["dados_radiograficos"][
+                "imagem_anotada_bytes"
+            ] = None
 
             st.session_state["avaliacao"]["pbl"] = None
 
@@ -587,6 +592,7 @@ if modulo == "Análise radiográfica":
                                         f"confiança = {confianca:.3f}"
                                     )
 
+
                             st.write(
                                 "Pontos organizados:",
                                 pontos_objeto
@@ -738,137 +744,148 @@ if modulo == "Análise radiográfica":
                                     f"{distancia_cej_bl_distal:.2f}"
                                 )
 
-                                # ESCOLHE A REFERÊNCIA RADICULAR DE CADA SUPERFÍCIE
+                            # ESCOLHE A REFERÊNCIA RADICULAR DE CADA SUPERFÍCIE
 
-                                if classe_id == 0:
+                            if classe_id == 0:
 
-                                    # Unirradicular:
-                                    # as duas superfícies usam a única referência radicular
-                                    referencia_mesial = "RL-c"
-                                    referencia_distal = "RL-c"
-
-
-                                elif classe_id == 1:
-
-                                    # Birradicular:
-                                    # cada superfície usa sua referência correspondente
-                                    referencia_mesial = "RL-m"
-                                    referencia_distal = "RL-d"
+                                # Unirradicular:
+                                # as duas superfícies usam a única referência radicular
+                                referencia_mesial = "RL-c"
+                                referencia_distal = "RL-c"
 
 
-                                elif classe_id == 2:
+                            elif classe_id == 1:
 
-                                    # Trirradicular:
-                                    # mesial usa RL-m e distal usa RL-d
-                                    referencia_mesial = "RL-m"
-                                    referencia_distal = "RL-d"
+                                # Birradicular:
+                                # cada superfície usa sua referência correspondente
+                                referencia_mesial = "RL-m"
+                                referencia_distal = "RL-d"
 
 
-                                else:
+                            elif classe_id == 2:
 
-                                    referencia_mesial = None
-                                    referencia_distal = None
+                                # Trirradicular:
+                                # mesial usa RL-m e distal usa RL-d
+                                referencia_mesial = "RL-m"
+                                referencia_distal = "RL-d"
 
-                                if (
-                                    referencia_mesial is None
-                                    or referencia_distal is None
-                                ):
 
-                                    st.warning(
-                                        "Não foi possível determinar as referências radiculares."
-                                    )
+                            else:
 
-                                    continue
+                                referencia_mesial = None
+                                referencia_distal = None
 
-                                distancia_cej_rl_mesial = calcular_distancia_projetada(
-                                    projecoes_objeto["CEJ-m"],
-                                    projecoes_objeto[referencia_mesial]
+                            if (
+                                referencia_mesial is None
+                                or referencia_distal is None
+                            ):
+
+                                st.warning(
+                                    "Não foi possível determinar as referências radiculares."
                                 )
 
+                                continue
 
-                                distancia_cej_rl_distal = calcular_distancia_projetada(
-                                    projecoes_objeto["CEJ-d"],
-                                    projecoes_objeto[referencia_distal]
-                                )
+                            distancia_cej_rl_mesial = calcular_distancia_projetada(
+                                projecoes_objeto["CEJ-m"],
+                                projecoes_objeto[referencia_mesial]
+                            )
 
+
+                            distancia_cej_rl_distal = calcular_distancia_projetada(
+                                projecoes_objeto["CEJ-d"],
+                                projecoes_objeto[referencia_distal]
+                            )
+
+
+                            st.write(
+                                "Referência radicular mesial:",
+                                referencia_mesial
+                            )
+
+                            st.write(
+                                "Distância projetada CEJ → referência mesial:",
+                                distancia_cej_rl_mesial
+                            )
+
+
+                            st.write(
+                                "Referência radicular distal:",
+                                referencia_distal
+                            )
+
+                            st.write(
+                                "Distância projetada CEJ → referência distal:",
+                                distancia_cej_rl_distal
+                            )
+
+                            # -------------------------
+                            # CÁLCULO DO %PBL
+                            # -------------------------
+
+                            pbl_mesial = calcular_pbl(
+                                distancia_cej_bl_mesial,
+                                distancia_cej_rl_mesial
+                            )
+
+
+                            pbl_distal = calcular_pbl(
+                                distancia_cej_bl_distal,
+                                distancia_cej_rl_distal
+                            )
+
+
+                            if pbl_mesial is None:
 
                                 st.write(
-                                    "Referência radicular mesial:",
-                                    referencia_mesial
+                                    "%PBL mesial: não disponível"
                                 )
+
+                            else:
 
                                 st.write(
-                                    "Distância projetada CEJ → referência mesial:",
-                                    distancia_cej_rl_mesial
+                                    "%PBL mesial:",
+                                    f"{pbl_mesial:.2f}%"
                                 )
 
+
+                            if pbl_distal is None:
 
                                 st.write(
-                                    "Referência radicular distal:",
-                                    referencia_distal
+                                    "%PBL distal: não disponível"
                                 )
+
+                            else:
 
                                 st.write(
-                                    "Distância projetada CEJ → referência distal:",
-                                    distancia_cej_rl_distal
+                                    "%PBL distal:",
+                                    f"{pbl_distal:.2f}%"
                                 )
 
-                                # -------------------------
-                                # CÁLCULO DO %PBL
-                                # -------------------------
+                            resultado_dente = {
+                                "numero_objeto": numero_objeto,
+                                "classe_id": classe_id,
+                                "classe_radicular": classe_radicular,
+                                "confianca_deteccao": confianca_deteccao,
+                                "referencia_mesial": referencia_mesial,
+                                "referencia_distal": referencia_distal,
+                                "pbl_mesial": pbl_mesial,
+                                "pbl_distal": pbl_distal,
+                                "ignorado": False
+                            }
 
-                                pbl_mesial = calcular_pbl(
-                                    distancia_cej_bl_mesial,
-                                    distancia_cej_rl_mesial
-                                )
-
-
-                                pbl_distal = calcular_pbl(
-                                    distancia_cej_bl_distal,
-                                    distancia_cej_rl_distal
-                                )
-
-
-                                if pbl_mesial is None:
-
-                                    st.write(
-                                        "%PBL mesial: não disponível"
-                                    )
-
-                                else:
-
-                                    st.write(
-                                        "%PBL mesial:",
-                                        f"{pbl_mesial:.2f}%"
-                                    )
-
-
-                                if pbl_distal is None:
-
-                                    st.write(
-                                        "%PBL distal: não disponível"
-                                    )
-
-                                else:
-
-                                    st.write(
-                                        "%PBL distal:",
-                                        f"{pbl_distal:.2f}%"
-                                    )
-
-                                resultado_dente = {
-                                    "numero_objeto": numero_objeto,
-                                    "classe_id": classe_id,
-                                    "classe_radicular": classe_radicular,
-                                    "confianca_deteccao": confianca_deteccao,
-                                    "referencia_mesial": referencia_mesial,
-                                    "referencia_distal": referencia_distal,
-                                    "pbl_mesial": pbl_mesial,
-                                    "pbl_distal": pbl_distal
-                                }
-
-                                resultados_dentes_analise.append(resultado_dente)
+                            resultados_dentes_analise.append(resultado_dente)
                                     
+                        buffer_imagem_anotada = BytesIO()
+
+                        imagem_anotada.save(
+                            buffer_imagem_anotada,
+                            format="PNG"
+                        )
+
+                        st.session_state["dados_radiograficos"][
+                            "imagem_anotada_bytes"
+                        ] = buffer_imagem_anotada.getvalue()
 
                         st.session_state["dados_radiograficos"][ #Fora do for, ou seja, primeiro acaba todos os dentes e depois salva no session_state
                             "resultados_dentes"
@@ -1013,101 +1030,9 @@ if modulo == "Análise radiográfica":
                                 superficie_determinante_analise
                             )
 
-                            st.subheader(
-                                "Radiografia com detecções"
-                            )
-    
-                            st.image(
-                                imagem_anotada,
-                                caption="Caixas e keypoints detectados pelo modelo"
-                            )
+                            
 
-
-                            # -------------------------
-                            # RESUMO DOS DENTES ANALISADOS
-                            # -------------------------
-
-                            st.subheader(
-                                "Resultados por dente"
-                            )
-
-
-                            if len(resultados_dentes_analise) == 0:
-
-                                st.warning(
-                                    "Nenhum dente possui %PBL calculável."
-                                )
-
-
-                            else:
-
-                                for resultado_dente in resultados_dentes_analise:
-
-                                    numero_objeto = resultado_dente[
-                                        "numero_objeto"
-                                    ]
-
-                                    classe_radicular = resultado_dente[
-                                        "classe_radicular"
-                                    ]
-
-                                    confianca_deteccao = resultado_dente[
-                                        "confianca_deteccao"
-                                    ]
-
-                                    pbl_mesial = resultado_dente[
-                                        "pbl_mesial"
-                                    ]
-
-                                    pbl_distal = resultado_dente[
-                                        "pbl_distal"
-                                    ]
-
-
-                                    st.markdown(
-                                        f"### Objeto {numero_objeto}"
-                                    )
-
-                                    st.write(
-                                        "Classe radicular:",
-                                        classe_radicular
-                                    )
-
-                                    st.write(
-                                        "Confiança da detecção:",
-                                        f"{confianca_deteccao:.3f}"
-                                    )
-
-
-                                    if pbl_mesial is None:
-
-                                        st.write(
-                                            "%PBL mesial: não disponível"
-                                        )
-
-                                    else:
-
-                                        st.write(
-                                            "%PBL mesial:",
-                                            f"{pbl_mesial:.2f}%"
-                                        )
-
-
-                                    if pbl_distal is None:
-
-                                        st.write(
-                                            "%PBL distal: não disponível"
-                                        )
-
-                                    else:
-
-                                        st.write(
-                                            "%PBL distal:",
-                                            f"{pbl_distal:.2f}%"
-                                        )
-
-
-                                    st.divider()
+                            st.divider()
 
                 except Exception as erro:
 
@@ -1119,6 +1044,378 @@ if modulo == "Análise radiográfica":
                         "Erro:",
                         str(erro)
                     )
+        # -------------------------
+        # EXIBIÇÃO DA ANÁLISE SALVA
+        # -------------------------
+
+        resultados_salvos = (
+            st.session_state["dados_radiograficos"][
+                "resultados_dentes"
+            ]
+        )
+
+        imagem_anotada_bytes = (
+            st.session_state["dados_radiograficos"][
+                "imagem_anotada_bytes"
+            ]
+        )
+
+
+        # Mostra a radiografia anotada salva
+        if imagem_anotada_bytes is not None:
+
+            st.subheader(
+                "Radiografia com detecções"
+            )
+
+            st.image(
+                imagem_anotada_bytes,
+                caption="Caixas e keypoints detectados pelo modelo"
+            )
+
+
+        # -------------------------
+        # RESUMO DOS DENTES ANALISADOS
+        # -------------------------
+
+        if len(resultados_salvos) > 0:
+
+            st.subheader(
+                "Resultados por dente"
+            )
+
+
+            for resultado_dente in resultados_salvos:
+
+                numero_objeto = resultado_dente[
+                    "numero_objeto"
+                ]
+
+                classe_radicular = resultado_dente[
+                    "classe_radicular"
+                ]
+
+                confianca_deteccao = resultado_dente[
+                    "confianca_deteccao"
+                ]
+
+                pbl_mesial = resultado_dente[
+                    "pbl_mesial"
+                ]
+
+                pbl_distal = resultado_dente[
+                    "pbl_distal"
+                ]
+
+
+                st.markdown(
+                    f"### Objeto {numero_objeto}"
+                )
+
+                st.write(
+                    "Classe radicular:",
+                    classe_radicular
+                )
+
+                st.write(
+                    "Confiança da detecção:",
+                    f"{confianca_deteccao:.3f}"
+                )
+
+
+                if pbl_mesial is None:
+
+                    st.write(
+                        "%PBL mesial: não disponível"
+                    )
+
+                else:
+
+                    st.write(
+                        "%PBL mesial:",
+                        f"{pbl_mesial:.2f}%"
+                    )
+
+
+                if pbl_distal is None:
+
+                    st.write(
+                        "%PBL distal: não disponível"
+                    )
+
+                else:
+
+                    st.write(
+                        "%PBL distal:",
+                        f"{pbl_distal:.2f}%"
+                    )
+
+
+                st.divider()
+
+
+
+        # -------------------------
+        # IGNORAR OBJETO DA ANÁLISE
+        # -------------------------
+
+        resultados_salvos = (
+            st.session_state["dados_radiograficos"][
+                "resultados_dentes"
+            ]
+        )
+
+
+        if len(resultados_salvos) > 0:
+
+            st.subheader(
+                "Revisão das detecções"
+            )
+
+            st.write(
+                "Se algum objeto detectado estiver visualmente "
+                "muito incorreto, ele pode ser ignorado no cálculo final."
+            )
+
+
+            objetos_disponiveis = []
+
+            for resultado_dente in resultados_salvos:
+
+                if resultado_dente["ignorado"] == False:
+
+                    objetos_disponiveis.append(
+                        resultado_dente["numero_objeto"]
+                    )
+
+
+            if len(objetos_disponiveis) > 0:
+
+                objeto_para_ignorar = st.selectbox(
+                    "Objeto a ignorar:",
+                    objetos_disponiveis,
+                    index=None,
+                    placeholder="Selecione um objeto"
+                )
+
+                
+                if st.button(
+                    "Ignorar objeto selecionado"
+                ):
+
+                    if objeto_para_ignorar is None:
+
+                        st.warning(
+                            "Selecione primeiro um objeto."
+                        )
+
+                    else:
+
+                        for resultado_dente in resultados_salvos:
+
+                            if (
+                                resultado_dente["numero_objeto"]
+                                == objeto_para_ignorar
+                            ):
+
+                                resultado_dente[
+                                    "ignorado"
+                                ] = True
+
+
+                        st.success(
+                            f"Objeto {objeto_para_ignorar} "
+                            "ignorado na análise."
+                        )
+
+                        # -------------------------
+                        # RECALCULA O MAIOR %PBL
+                        # SEM OS OBJETOS IGNORADOS
+                        # -------------------------
+
+                        pbl_maximo_novo = None
+
+                        dente_determinante_novo = None
+
+                        superficie_determinante_nova = None
+
+
+                        for resultado_dente in resultados_salvos:
+
+                            # Se o objeto foi ignorado,
+                            # não participa da análise
+                            if resultado_dente["ignorado"]:
+
+                                continue
+
+
+                            pbl_mesial = resultado_dente[
+                                "pbl_mesial"
+                            ]
+
+                            pbl_distal = resultado_dente[
+                                "pbl_distal"
+                            ]
+
+                            numero_objeto = resultado_dente[
+                                "numero_objeto"
+                            ]
+
+
+                            # Verifica a superfície mesial
+                            if pbl_mesial is not None:
+
+                                if (
+                                    pbl_maximo_novo is None
+                                    or pbl_mesial > pbl_maximo_novo
+                                ):
+
+                                    pbl_maximo_novo = pbl_mesial
+
+                                    dente_determinante_novo = (
+                                        numero_objeto
+                                    )
+
+                                    superficie_determinante_nova = (
+                                        "mesial"
+                                    )
+
+
+                            # Verifica a superfície distal
+                            if pbl_distal is not None:
+
+                                if (
+                                    pbl_maximo_novo is None
+                                    or pbl_distal > pbl_maximo_novo
+                                ):
+
+                                    pbl_maximo_novo = pbl_distal
+
+                                    dente_determinante_novo = (
+                                        numero_objeto
+                                    )
+
+                                    superficie_determinante_nova = (
+                                        "distal"
+                                    )
+                        st.session_state["dados_radiograficos"][
+                            "pbl_maximo"
+                        ] = pbl_maximo_novo
+
+                        st.session_state["dados_radiograficos"][
+                            "dente_determinante"
+                        ] = dente_determinante_novo
+
+                        st.session_state["dados_radiograficos"][
+                            "superficie_determinante"
+                        ] = superficie_determinante_nova
+
+
+                        st.session_state["avaliacao"][
+                            "pbl"
+                        ] = pbl_maximo_novo
+
+                        if pbl_maximo_novo is None:
+
+                            st.warning(
+                                "Nenhum %PBL válido permaneceu "
+                                "após ignorar o objeto."
+                            )
+
+                        else:
+
+                            st.write(
+                                "Novo maior %PBL:",
+                                f"{pbl_maximo_novo:.2f}%"
+                            )
+
+                            st.write(
+                                "Novo objeto determinante:",
+                                dente_determinante_novo
+                            )
+
+                            st.write(
+                                "Nova superfície determinante:",
+                                superficie_determinante_nova
+                            )
+
+             # -------------------------
+            # OBJETOS IGNORADOS
+            # -------------------------
+
+            objetos_ignorados = []
+
+            for resultado_dente in resultados_salvos:
+
+                if resultado_dente["ignorado"]:
+
+                    objetos_ignorados.append(
+                        resultado_dente["numero_objeto"]
+                    )
+
+
+            if len(objetos_ignorados) > 0:
+
+                st.warning(
+                    "Objetos ignorados na análise: "
+                    + ", ".join(
+                        str(numero)
+                        for numero in objetos_ignorados
+                    )
+                )
+            # -------------------------
+            # RESULTADO RADIOGRÁFICO ATUAL
+            # -------------------------
+
+            pbl_atual = (
+                st.session_state["dados_radiograficos"][
+                    "pbl_maximo"
+                ]
+            )
+
+            dente_atual = (
+                st.session_state["dados_radiograficos"][
+                    "dente_determinante"
+                ]
+            )
+
+            superficie_atual = (
+                st.session_state["dados_radiograficos"][
+                    "superficie_determinante"
+                ]
+            )
+
+
+            st.subheader(
+                "Resultado radiográfico final"
+            )
+
+
+            if pbl_atual is None:
+
+                st.warning(
+                    "Nenhum %PBL válido está disponível."
+                )
+
+            else:
+
+                st.write(
+                    "Maior %PBL considerado:",
+                    f"{pbl_atual:.2f}%"
+                )
+
+                st.write(
+                    "Objeto determinante:",
+                    dente_atual
+                )
+
+                st.write(
+                    "Superfície determinante:",
+                    superficie_atual
+                )
+
+
+
 
 
 st.divider()
