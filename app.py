@@ -41,6 +41,7 @@ REFERENCIAS_RADICULARES = {
     2: ["RL-m", "RL-d", "RL-c"]
 }
 
+
 def calcular_eixo_dentario(pontos, classe_id): #FUNÇÃO PRA ACHAR O EIXO DO DENTE P/CALCULOS
 
     cej_m = pontos["CEJ-m"]
@@ -171,6 +172,47 @@ def projetar_no_eixo(ponto, eixo):
 
     return posicao_no_eixo
 
+def calcular_distancia_projetada(posicao_origem, posicao_destino):
+
+    if (
+        posicao_origem is None
+        or posicao_destino is None
+    ):
+        return None
+
+
+    distancia = (
+        posicao_destino
+        - posicao_origem
+    )
+
+
+    return distancia
+
+def calcular_pbl(distancia_cej_bl, distancia_cej_rl):
+
+    if (
+        distancia_cej_bl is None
+        or distancia_cej_rl is None
+    ):
+        return None
+
+
+    if distancia_cej_rl <= 0:
+        return None
+
+
+    if distancia_cej_bl < 0:
+        return None
+
+
+    percentual_pbl = (
+        distancia_cej_bl
+        / distancia_cej_rl
+    ) * 100
+
+
+    return percentual_pbl
 
 st.set_page_config(
     page_title="Apoio à Decisão em Periodontia",
@@ -423,6 +465,8 @@ if modulo == "Análise radiográfica":
                             .tolist()
                         )
 
+                        resultados_dentes_analise = []
+
                         for numero_objeto, (caixa_objeto, keypoints_objeto) in enumerate(
                             zip(todas_caixas, todos_keypoints),
                             start=1
@@ -554,28 +598,33 @@ if modulo == "Análise radiográfica":
                                 )
                             )
 
-                            
+
                             nomes_para_projetar = [
                                 "CEJ-m",
                                 "BL-m",
                                 "CEJ-d",
                                 "BL-d"
-                            ] + referencias_objeto
-
+                            ] + referencias_objeto #referencias_objeto recebe quais referencias radiculares 
+                                                   #serão usadas de acordo com o classe_id
 
                             projecoes_objeto = {}
 
 
-                            for nome_ponto in nomes_para_projetar:
+                            for nome_ponto in nomes_para_projetar: #passa por cada nome ja verificando as referencias apicais necessarias
+                                                                   #fala que para nome, fazer a projeçao (chamar funçao)
 
-                                ponto = pontos_objeto[nome_ponto]
-
+                                ponto = pontos_objeto[nome_ponto] #ponto_objeto é o dicionario que contem
+                                                                  #nome e coordenadas do dente (feito com o zip)
+                                                                  #estamos preparando 'ponto' para passa-lo como parametro
+                                                                  #ponto recebe SÓ a coordenada (x,y)
+                                                                    
                                 posicao = projetar_no_eixo(
-                                    ponto,
-                                    eixo_objeto
-                                )
+                                    ponto,      
+                                    eixo_objeto #eixo_objeto é justamente o retorno da função que calcula o eixo 
+                                )               #contem o dicionario com coordenadas do centro, versores etc
 
-                                projecoes_objeto[nome_ponto] = posicao
+                                projecoes_objeto[nome_ponto] = posicao #recebe o retorno da função, que sera
+                                                                #um dicionário contendo nome do ponto + disntancia projetada
 
 
                                 if posicao is None:
@@ -592,6 +641,188 @@ if modulo == "Análise radiográfica":
                                         "→ posição no eixo:",
                                         f"{posicao:.2f}"
                                     )
+
+
+                            #AGORA SIM VAMOS CALCULAR AS DISTANCIAS, DE ACORDO COM SUAS PROJEÇÕES NO EIXO
+                            distancia_cej_bl_mesial = calcular_distancia_projetada(
+                                projecoes_objeto["CEJ-m"],
+                                projecoes_objeto["BL-m"]
+                            )
+                            distancia_cej_bl_distal = calcular_distancia_projetada(
+                                projecoes_objeto["CEJ-d"],
+                                projecoes_objeto["BL-d"]
+                            )
+
+                            if distancia_cej_bl_mesial is None:
+
+                                st.write(
+                                    "Distância CEJ → BL mesial: não disponível"
+                                )
+
+                            else:
+
+                                st.write(
+                                    "Distância projetada CEJ → BL mesial:",
+                                    f"{distancia_cej_bl_mesial:.2f}"
+                                )
+
+
+                            if distancia_cej_bl_distal is None:
+
+                                st.write(
+                                    "Distância CEJ → BL distal: não disponível"
+                                )
+
+                            else:
+
+                                st.write(
+                                    "Distância projetada CEJ → BL distal:",
+                                    f"{distancia_cej_bl_distal:.2f}"
+                                )
+
+                                # ESCOLHE A REFERÊNCIA RADICULAR DE CADA SUPERFÍCIE
+
+                                if classe_id == 0:
+
+                                    # Unirradicular:
+                                    # as duas superfícies usam a única referência radicular
+                                    referencia_mesial = "RL-c"
+                                    referencia_distal = "RL-c"
+
+
+                                elif classe_id == 1:
+
+                                    # Birradicular:
+                                    # cada superfície usa sua referência correspondente
+                                    referencia_mesial = "RL-m"
+                                    referencia_distal = "RL-d"
+
+
+                                elif classe_id == 2:
+
+                                    # Trirradicular:
+                                    # mesial usa RL-m e distal usa RL-d
+                                    referencia_mesial = "RL-m"
+                                    referencia_distal = "RL-d"
+
+
+                                else:
+
+                                    referencia_mesial = None
+                                    referencia_distal = None
+
+                                if (
+                                    referencia_mesial is None
+                                    or referencia_distal is None
+                                ):
+
+                                    st.warning(
+                                        "Não foi possível determinar as referências radiculares."
+                                    )
+
+                                    continue
+
+                                distancia_cej_rl_mesial = calcular_distancia_projetada(
+                                    projecoes_objeto["CEJ-m"],
+                                    projecoes_objeto[referencia_mesial]
+                                )
+
+
+                                distancia_cej_rl_distal = calcular_distancia_projetada(
+                                    projecoes_objeto["CEJ-d"],
+                                    projecoes_objeto[referencia_distal]
+                                )
+
+
+                                st.write(
+                                    "Referência radicular mesial:",
+                                    referencia_mesial
+                                )
+
+                                st.write(
+                                    "Distância projetada CEJ → referência mesial:",
+                                    distancia_cej_rl_mesial
+                                )
+
+
+                                st.write(
+                                    "Referência radicular distal:",
+                                    referencia_distal
+                                )
+
+                                st.write(
+                                    "Distância projetada CEJ → referência distal:",
+                                    distancia_cej_rl_distal
+                                )
+
+                                # -------------------------
+                                # CÁLCULO DO %PBL
+                                # -------------------------
+
+                                pbl_mesial = calcular_pbl(
+                                    distancia_cej_bl_mesial,
+                                    distancia_cej_rl_mesial
+                                )
+
+
+                                pbl_distal = calcular_pbl(
+                                    distancia_cej_bl_distal,
+                                    distancia_cej_rl_distal
+                                )
+
+
+                                if pbl_mesial is None:
+
+                                    st.write(
+                                        "%PBL mesial: não disponível"
+                                    )
+
+                                else:
+
+                                    st.write(
+                                        "%PBL mesial:",
+                                        f"{pbl_mesial:.2f}%"
+                                    )
+
+
+                                if pbl_distal is None:
+
+                                    st.write(
+                                        "%PBL distal: não disponível"
+                                    )
+
+                                else:
+
+                                    st.write(
+                                        "%PBL distal:",
+                                        f"{pbl_distal:.2f}%"
+                                    )
+
+                                resultado_dente = {
+                                    "numero_objeto": numero_objeto,
+                                    "classe_id": classe_id,
+                                    "classe_radicular": classe_radicular,
+                                    "confianca_deteccao": confianca_deteccao,
+                                    "referencia_mesial": referencia_mesial,
+                                    "referencia_distal": referencia_distal,
+                                    "pbl_mesial": pbl_mesial,
+                                    "pbl_distal": pbl_distal
+                                }
+
+                                resultados_dentes_analise.append(resultado_dente)
+                                    
+                            
+                            st.session_state["dados_radiograficos"][ #Fora do for, ou seja, primeiro acaba todos os dentes e depois salva no session_state
+                                "resultados_dentes"
+                            ] = resultados_dentes_analise
+
+                            st.write(
+                                "Resultados dos dentes:",
+                                st.session_state[
+                                    "dados_radiograficos"
+                                ]["resultados_dentes"]
+                            )
+
                 except Exception as erro:
 
                     st.error(
