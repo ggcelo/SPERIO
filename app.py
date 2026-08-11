@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from io import BytesIO
 from math import hypot
-from PIL import Image
+from PIL import Image, ImageDraw
 from ultralytics import YOLO
 
 pasta_projeto = Path(__file__).parent
@@ -367,6 +367,7 @@ if modulo == "Análise radiográfica":
                 "confirmado"
             ] = False
 
+            st.session_state["avaliacao"]["pbl"] = None
 
         # Guarda o nome do arquivo
         st.session_state["dados_radiograficos"][
@@ -444,6 +445,12 @@ if modulo == "Análise radiográfica":
 
                     resultado = resultados[0]
 
+                    imagem_anotada = imagem_para_modelo.copy()
+
+                    desenho = ImageDraw.Draw(
+                        imagem_anotada
+                    )
+
 
                     st.success(
                         "Inferência radiográfica executada com sucesso."
@@ -485,6 +492,27 @@ if modulo == "Análise radiográfica":
                             confianca_deteccao = caixa_objeto[4]
 
                             classe_id = int(caixa_objeto[5])
+
+                            #PEGA OS PONTOS PARA DESNEHAR A CAIXA EM VOLTA DO DENTE
+                            x1 = caixa_objeto[0]
+                            y1 = caixa_objeto[1]
+                            x2 = caixa_objeto[2]
+                            y2 = caixa_objeto[3]
+
+                            desenho.rectangle(
+                                [
+                                    (x1, y1),
+                                    (x2, y2)
+                                ],
+                                outline="yellow",
+                                width=3
+                            )
+
+                            desenho.text(
+                                (x1, y1 - 15),
+                                f"Objeto {numero_objeto}",
+                                fill="yellow"
+                            )
 
                             classe_radicular = CLASSES_RADICULARES.get( #usa o .get para ter um valor padrão ao encontrar um classe id que nao corresponda a nenhum listado
                             classe_id,
@@ -532,6 +560,26 @@ if modulo == "Análise radiográfica":
 
                                     pontos_objeto[nome] = (x,y)
                                         
+                                   # Desenha o keypoint na radiografia
+                                    raio = 4
+
+                                    desenho.ellipse(
+                                        [
+                                            (x - raio, y - raio),
+                                            (x + raio, y + raio)
+                                        ],
+                                        fill="red",
+                                        outline="white"
+                                    )
+
+
+                                    # Escreve o nome do keypoint
+                                    desenho.text(
+                                        (x + 6, y - 6),
+                                        nome,
+                                        fill="white"
+                                    )
+
                                     st.write(       #escreve cada ponto com suas informações, no loop for
                                         f"{nome}: "
                                         f"x = {x:.1f}, "
@@ -821,6 +869,14 @@ if modulo == "Análise radiográfica":
 
                                 resultados_dentes_analise.append(resultado_dente)
                                     
+                            st.subheader(
+                                "Radiografia com detecções"
+                            )
+
+                            st.image(
+                                imagem_anotada,
+                                caption="Caixas e keypoints detectados pelo modelo"
+                            )
                             
                             st.session_state["dados_radiograficos"][ #Fora do for, ou seja, primeiro acaba todos os dentes e depois salva no session_state
                                 "resultados_dentes"
@@ -896,17 +952,62 @@ if modulo == "Análise radiográfica":
 
                                         superficie_determinante_analise = "distal"
 
-                            #MOSTRA VAORES DE PBL E O QUE DETERMINOU
+
+                            # SALVA O RESULTADO RADIOGRÁFICO
+                            # ----------------------------
                             if pbl_maximo_analise is None:
+
+                                st.session_state["dados_radiograficos"][
+                                    "pbl_maximo"
+                                ] = None
+
+                                st.session_state["dados_radiograficos"][
+                                    "dente_determinante"
+                                ] = None
+
+                                st.session_state["dados_radiograficos"][
+                                    "superficie_determinante"
+                                ] = None
+
+                                st.session_state["avaliacao"][
+                                    "pbl"
+                                ] = None
+
 
                                 st.warning(
                                     "Nenhum %PBL válido pôde ser calculado."
                                 )
 
+
                             else:
 
+                                st.session_state["dados_radiograficos"][
+                                    "pbl_maximo"
+                                ] = pbl_maximo_analise
+
+                                st.session_state["dados_radiograficos"][
+                                    "dente_determinante"
+                                ] = dente_determinante_analise
+
+                                st.session_state["dados_radiograficos"][
+                                    "superficie_determinante"
+                                ] = superficie_determinante_analise
+
+
+                                # Integra o resultado radiográfico
+                                # com o restante da aplicação
+                                st.session_state["avaliacao"][
+                                    "pbl"
+                                ] = pbl_maximo_analise
+
+
+                                st.success(
+                                    "Resultado radiográfico armazenado com sucesso."
+                                )
+
+
                                 st.write(
-                                    "Maior %PBL encontrado:",
+                                    "Maior %PBL:",
                                     f"{pbl_maximo_analise:.2f}%"
                                 )
 
@@ -961,7 +1062,9 @@ if st.button("Zerar contador"):
 st.divider()
 st.subheader("Primeiro estado de uma avaliação")
 
-
+#----------------------------------------------
+#dicionario dos resultados 'avaliacao' foi retirado daqui e posto ANTES do Modulo Radiografico
+#----------------------------------------------
 
 st.write(st.session_state["avaliacao"])
 
