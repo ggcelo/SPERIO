@@ -142,6 +142,36 @@ def calcular_eixo_dentario(pontos, classe_id): #FUNÇÃO PRA ACHAR O EIXO DO DEN
         "fonte_referencia_apical": fonte_referencia
     }
 
+
+def projetar_no_eixo(ponto, eixo):
+
+    if ponto is None:
+        return None
+
+
+    centro_x, centro_y = eixo["centro_cervical"]
+
+    ponto_x, ponto_y = ponto
+
+
+    # Deslocamento entre o centro cervical
+    # e o ponto que queremos projetar
+    delta_x = ponto_x - centro_x
+
+    delta_y = ponto_y - centro_y
+
+
+    # Descobre quanto desse deslocamento
+    # acontece na direção do eixo do dente
+    posicao_no_eixo = (
+        delta_x * eixo["versor_x"]
+        + delta_y * eixo["versor_y"]
+    )
+
+
+    return posicao_no_eixo
+
+
 st.set_page_config(
     page_title="Apoio à Decisão em Periodontia",
     page_icon="🦷",
@@ -523,7 +553,45 @@ if modulo == "Análise radiográfica":
                                     eixo_objeto["versor_y"]
                                 )
                             )
+
                             
+                            nomes_para_projetar = [
+                                "CEJ-m",
+                                "BL-m",
+                                "CEJ-d",
+                                "BL-d"
+                            ] + referencias_objeto
+
+
+                            projecoes_objeto = {}
+
+
+                            for nome_ponto in nomes_para_projetar:
+
+                                ponto = pontos_objeto[nome_ponto]
+
+                                posicao = projetar_no_eixo(
+                                    ponto,
+                                    eixo_objeto
+                                )
+
+                                projecoes_objeto[nome_ponto] = posicao
+
+
+                                if posicao is None:
+
+                                    st.write(
+                                        nome_ponto,
+                                        "→ projeção não disponível"
+                                    )
+
+                                else:
+
+                                    st.write(
+                                        nome_ponto,
+                                        "→ posição no eixo:",
+                                        f"{posicao:.2f}"
+                                    )
                 except Exception as erro:
 
                     st.error(
