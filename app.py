@@ -869,157 +869,245 @@ if modulo == "Análise radiográfica":
 
                                 resultados_dentes_analise.append(resultado_dente)
                                     
+
+                        st.session_state["dados_radiograficos"][ #Fora do for, ou seja, primeiro acaba todos os dentes e depois salva no session_state
+                            "resultados_dentes"
+                        ] = resultados_dentes_analise
+
+                        st.write(
+                            "Resultados dos dentes:", #mostra o resultado da lista dos dados adquiridos no modulo radiografico
+                            st.session_state[         #cada item da lista contem um dicionario com resultado_dente 
+                                "dados_radiograficos"
+                            ]["resultados_dentes"]
+                        )
+
+                        # -------------------------
+                        # PROCURA O MAIOR %PBL DA RADIOGRAFIA
+                        # -------------------------
+
+                        pbl_maximo_analise = None
+
+                        dente_determinante_analise = None
+
+                        superficie_determinante_analise = None
+
+
+                        for resultado_dente in resultados_dentes_analise:
+
+                            # -------------------------
+                            # SUPERFÍCIE MESIAL
+                            # -------------------------
+
+                            pbl_mesial_dente = resultado_dente[
+                                "pbl_mesial"
+                            ]
+
+
+                            if pbl_mesial_dente is not None:
+
+                                if (
+                                    pbl_maximo_analise is None
+                                    or pbl_mesial_dente > pbl_maximo_analise
+                                ):
+
+                                    pbl_maximo_analise = pbl_mesial_dente
+
+                                    dente_determinante_analise = resultado_dente[
+                                        "numero_objeto"
+                                    ]
+
+                                    superficie_determinante_analise = "mesial"
+
+
+                            # -------------------------
+                            # SUPERFÍCIE DISTAL
+                            # -------------------------
+
+                            pbl_distal_dente = resultado_dente[
+                                "pbl_distal"
+                            ]
+
+
+                            if pbl_distal_dente is not None:
+
+                                if (
+                                    pbl_maximo_analise is None
+                                    or pbl_distal_dente > pbl_maximo_analise
+                                ):
+
+                                    pbl_maximo_analise = pbl_distal_dente
+
+                                    dente_determinante_analise = resultado_dente[
+                                        "numero_objeto"
+                                    ]
+
+
+                                    superficie_determinante_analise = "distal"
+
+
+                        # SALVA O RESULTADO RADIOGRÁFICO
+                        # ----------------------------
+                        if pbl_maximo_analise is None:
+
+                            st.session_state["dados_radiograficos"][
+                                "pbl_maximo"
+                            ] = None
+
+                            st.session_state["dados_radiograficos"][
+                                "dente_determinante"
+                            ] = None
+
+                            st.session_state["dados_radiograficos"][
+                                "superficie_determinante"
+                            ] = None
+
+                            st.session_state["avaliacao"][
+                                "pbl"
+                            ] = None
+
+
+                            st.warning(
+                                "Nenhum %PBL válido pôde ser calculado."
+                            )
+
+
+                        else:
+
+                            st.session_state["dados_radiograficos"][
+                                "pbl_maximo"
+                            ] = pbl_maximo_analise
+
+                            st.session_state["dados_radiograficos"][
+                                "dente_determinante"
+                            ] = dente_determinante_analise
+
+                            st.session_state["dados_radiograficos"][
+                                "superficie_determinante"
+                            ] = superficie_determinante_analise
+
+
+                            # Integra o resultado radiográfico
+                            # com o restante da aplicação
+                            st.session_state["avaliacao"][
+                                "pbl"
+                            ] = pbl_maximo_analise
+
+
+                            st.success(
+                                "Resultado radiográfico armazenado com sucesso."
+                            )
+
+
+                            st.write(
+                                "Maior %PBL:",
+                                f"{pbl_maximo_analise:.2f}%"
+                            )
+
+                            st.write(
+                                "Objeto determinante:",
+                                dente_determinante_analise
+                            )
+
+                            st.write(
+                                "Superfície determinante:",
+                                superficie_determinante_analise
+                            )
+
                             st.subheader(
                                 "Radiografia com detecções"
                             )
-
+    
                             st.image(
                                 imagem_anotada,
                                 caption="Caixas e keypoints detectados pelo modelo"
                             )
-                            
-                            st.session_state["dados_radiograficos"][ #Fora do for, ou seja, primeiro acaba todos os dentes e depois salva no session_state
-                                "resultados_dentes"
-                            ] = resultados_dentes_analise
 
-                            st.write(
-                                "Resultados dos dentes:", #mostra o resultado da lista dos dados adquiridos no modulo radiografico
-                                st.session_state[         #cada item da lista contem um dicionario com resultado_dente 
-                                    "dados_radiograficos"
-                                ]["resultados_dentes"]
+
+                            # -------------------------
+                            # RESUMO DOS DENTES ANALISADOS
+                            # -------------------------
+
+                            st.subheader(
+                                "Resultados por dente"
                             )
 
-                            # -------------------------
-                            # PROCURA O MAIOR %PBL DA RADIOGRAFIA
-                            # -------------------------
 
-                            pbl_maximo_analise = None
-
-                            dente_determinante_analise = None
-
-                            superficie_determinante_analise = None
-
-
-                            for resultado_dente in resultados_dentes_analise:
-
-                                # -------------------------
-                                # SUPERFÍCIE MESIAL
-                                # -------------------------
-
-                                pbl_mesial_dente = resultado_dente[
-                                    "pbl_mesial"
-                                ]
-
-
-                                if pbl_mesial_dente is not None:
-
-                                    if (
-                                        pbl_maximo_analise is None
-                                        or pbl_mesial_dente > pbl_maximo_analise
-                                    ):
-
-                                        pbl_maximo_analise = pbl_mesial_dente
-
-                                        dente_determinante_analise = resultado_dente[
-                                            "numero_objeto"
-                                        ]
-
-                                        superficie_determinante_analise = "mesial"
-
-
-                                # -------------------------
-                                # SUPERFÍCIE DISTAL
-                                # -------------------------
-
-                                pbl_distal_dente = resultado_dente[
-                                    "pbl_distal"
-                                ]
-
-
-                                if pbl_distal_dente is not None:
-
-                                    if (
-                                        pbl_maximo_analise is None
-                                        or pbl_distal_dente > pbl_maximo_analise
-                                    ):
-
-                                        pbl_maximo_analise = pbl_distal_dente
-
-                                        dente_determinante_analise = resultado_dente[
-                                            "numero_objeto"
-                                        ]
-
-
-                                        superficie_determinante_analise = "distal"
-
-
-                            # SALVA O RESULTADO RADIOGRÁFICO
-                            # ----------------------------
-                            if pbl_maximo_analise is None:
-
-                                st.session_state["dados_radiograficos"][
-                                    "pbl_maximo"
-                                ] = None
-
-                                st.session_state["dados_radiograficos"][
-                                    "dente_determinante"
-                                ] = None
-
-                                st.session_state["dados_radiograficos"][
-                                    "superficie_determinante"
-                                ] = None
-
-                                st.session_state["avaliacao"][
-                                    "pbl"
-                                ] = None
-
+                            if len(resultados_dentes_analise) == 0:
 
                                 st.warning(
-                                    "Nenhum %PBL válido pôde ser calculado."
+                                    "Nenhum dente possui %PBL calculável."
                                 )
 
 
                             else:
 
-                                st.session_state["dados_radiograficos"][
-                                    "pbl_maximo"
-                                ] = pbl_maximo_analise
+                                for resultado_dente in resultados_dentes_analise:
 
-                                st.session_state["dados_radiograficos"][
-                                    "dente_determinante"
-                                ] = dente_determinante_analise
+                                    numero_objeto = resultado_dente[
+                                        "numero_objeto"
+                                    ]
 
-                                st.session_state["dados_radiograficos"][
-                                    "superficie_determinante"
-                                ] = superficie_determinante_analise
+                                    classe_radicular = resultado_dente[
+                                        "classe_radicular"
+                                    ]
 
+                                    confianca_deteccao = resultado_dente[
+                                        "confianca_deteccao"
+                                    ]
 
-                                # Integra o resultado radiográfico
-                                # com o restante da aplicação
-                                st.session_state["avaliacao"][
-                                    "pbl"
-                                ] = pbl_maximo_analise
+                                    pbl_mesial = resultado_dente[
+                                        "pbl_mesial"
+                                    ]
 
-
-                                st.success(
-                                    "Resultado radiográfico armazenado com sucesso."
-                                )
+                                    pbl_distal = resultado_dente[
+                                        "pbl_distal"
+                                    ]
 
 
-                                st.write(
-                                    "Maior %PBL:",
-                                    f"{pbl_maximo_analise:.2f}%"
-                                )
+                                    st.markdown(
+                                        f"### Objeto {numero_objeto}"
+                                    )
 
-                                st.write(
-                                    "Objeto determinante:",
-                                    dente_determinante_analise
-                                )
+                                    st.write(
+                                        "Classe radicular:",
+                                        classe_radicular
+                                    )
 
-                                st.write(
-                                    "Superfície determinante:",
-                                    superficie_determinante_analise
-                                )
+                                    st.write(
+                                        "Confiança da detecção:",
+                                        f"{confianca_deteccao:.3f}"
+                                    )
+
+
+                                    if pbl_mesial is None:
+
+                                        st.write(
+                                            "%PBL mesial: não disponível"
+                                        )
+
+                                    else:
+
+                                        st.write(
+                                            "%PBL mesial:",
+                                            f"{pbl_mesial:.2f}%"
+                                        )
+
+
+                                    if pbl_distal is None:
+
+                                        st.write(
+                                            "%PBL distal: não disponível"
+                                        )
+
+                                    else:
+
+                                        st.write(
+                                            "%PBL distal:",
+                                            f"{pbl_distal:.2f}%"
+                                        )
+
+
+                                    st.divider()
 
                 except Exception as erro:
 
