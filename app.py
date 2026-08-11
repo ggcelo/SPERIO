@@ -16,6 +16,30 @@ caminho_modelo = (
     / "perio_kpt_7kpt_fold0_best.pt"
 )
 
+CONFIANCA_POSE = 0.48
+IOU_POSE = 0.30
+NOMES_KEYPOINTS = [
+    "CEJ-m",
+    "BL-m",
+    "RL-m",
+    "CEJ-d",
+    "BL-d",
+    "RL-d",
+    "RL-c"
+]
+
+CLASSES_RADICULARES = {
+    0: "Dente unirradicular",
+    1: "Dente birradicular",
+    2: "Dente trirradicular"
+}
+
+REFERENCIAS_RADICULARES = {
+    0: ["RL-c"],
+    1: ["RL-m", "RL-d"],
+    2: ["RL-m", "RL-d", "RL-c"]
+}
+
 st.set_page_config(
     page_title="Apoio à Decisão em Periodontia",
     page_icon="🦷",
@@ -78,9 +102,9 @@ if modulo == "Análise radiográfica":
         "Envie uma radiografia periapical para análise."
     )
 
+    modelo_radiografico = None
 
     # Verifica se o arquivo do modelo existe
-
     if caminho_modelo.exists():
 
         st.success(
@@ -188,6 +212,183 @@ if modulo == "Análise radiográfica":
             "Arquivo armazenado:",
             st.session_state["dados_radiograficos"]["nome_arquivo"]
         )
+
+        #TESTA INFERENCIA COM O MODELO
+        if (
+        st.session_state["dados_radiograficos"]["imagem_bytes"] is not None
+        and modelo_radiografico is not None
+        ):
+
+            if st.button("Analisar radiografia"):
+
+                try:
+
+                    imagem_bytes = (
+                        st.session_state["dados_radiograficos"][
+                            "imagem_bytes"
+                        ]
+                    )
+
+
+                    imagem_para_modelo = Image.open(
+                        BytesIO(imagem_bytes)
+                    ).convert("RGB")
+
+                    #DESATIVA TEMPORARIARMENTE UMA OTIMIZAÇÃO DE USO DA CPU DO PYTORCH, SALVANDO O ESTADO ANTIGO
+                    estado_mkldnn = torch.backends.mkldnn.enabled 
+
+                    # Desativa temporariamente o MKLDNN para manter
+                    # compatibilidade com a execução do modelo radiográfico
+                    torch.backends.mkldnn.enabled = False
+
+
+                    try:
+
+                        resultados = modelo_radiografico.predict(
+                            source=imagem_para_modelo,
+                            conf=CONFIANCA_POSE,
+                            iou=IOU_POSE,
+                            device="cpu",
+                            save=False,
+                            verbose=False
+                        )
+
+                    finally: #DEVOLVE O ESTADO ANTIGO
+
+                        torch.backends.mkldnn.enabled = estado_mkldnn
+
+
+                    resultado = resultados[0]
+
+
+                    st.success(
+                        "Inferência radiográfica executada com sucesso."
+                    )
+
+
+                    st.write(
+                        "Objetos detectados pelo modelo:",
+                        len(resultado.boxes)
+                    )
+
+                    if resultado.keypoints is None:
+
+                        st.warning(
+                            "O modelo retornou objetos sem keypoints."
+                        )
+
+                    else:
+
+                        todos_keypoints = (
+                            resultado.keypoints.data #pega os dados dos keypoints do pytorch [x,y, confiança]
+                            .cpu() #garante que eles serão pegos da cpu
+                            .tolist() #os transforma para uma lista em python
+                        )
+
+                        todas_caixas = (
+                            resultado.boxes.data
+                            .cpu()
+                            .tolist()
+                        )
+
+                        for numero_objeto, (caixa_objeto, keypoints_objeto) in enumerate(
+                            zip(todas_caixas, todos_keypoints),
+                            start=1
+                        ):
+
+                            confianca_deteccao = caixa_objeto[4]
+
+                            classe_id = int(caixa_objeto[5])
+
+                            classe_radicular = CLASSES_RADICULARES.get( #usa o .get para ter um valor padrão ao encontrar um classe id que nao corresponda a nenhum listado
+                            classe_id,
+                            "Classe desconhecida"
+                            )
+                            
+                            st.write(
+                                f"Objeto {numero_objeto}"
+                            )
+
+                            st.write(
+                                "Classe radicular:",
+                                classe_radicular
+                            )
+
+                            st.write(
+                                "Confiança da detecção:",
+                                f"{confianca_deteccao:.3f}"
+                            )
+
+                            if len(keypoints_objeto) != len(NOMES_KEYPOINTS): #verifica se o numero de keypoints do objeto é igual ao numero de nomes de keypoints, se não for, mostra um aviso e continua para o proximo objeto
+
+                                st.warning(
+                                    "Este objeto não possui exatamente 7 keypoints."
+                                )
+
+                                continue
+
+
+                            pontos_objeto = {}
+
+                            for nome, ponto in zip( #atrela cada nome de keypoint com o ponto correspondente do objeto, para melhor organização
+                                NOMES_KEYPOINTS,
+                                keypoints_objeto
+                            ):
+
+                                x, y, confianca = ponto #passa cada ponto para x, y e confiança
+
+                                if x == 0 and y == 0:
+
+                                    pontos_objeto[nome] = None
+                                    st.write(f"{nome}: não detectado")
+                                                          
+                                else:
+
+                                    pontos_objeto[nome] = (x,y)
+                                        
+                                    st.write(       #escreve cada ponto com suas informações, no loop for
+                                        f"{nome}: "
+                                        f"x = {x:.1f}, "
+                                        f"y = {y:.1f}, "
+                                        f"confiança = {confianca:.3f}"
+                                    )
+
+                            st.write(
+                                "Pontos organizados:",
+                                pontos_objeto
+                            )
+
+                            referencias_objeto = REFERENCIAS_RADICULARES.get(
+                                classe_id,
+                                []
+                            )
+                            
+                            st.write(
+                                "Referências radiculares utilizadas:",
+                                referencias_objeto
+                            )
+
+                            for nome_referencia in referencias_objeto:
+
+                                ponto_referencia = pontos_objeto[
+                                    nome_referencia
+                                ]
+
+                                st.write(
+                                    nome_referencia,
+                                    "→",
+                                    ponto_referencia
+                                )
+                except Exception as erro:
+
+                    st.error(
+                        "Não foi possível analisar a radiografia."
+                    )
+
+                    st.write(
+                        "Erro:",
+                        str(erro)
+                    )
 
 
 st.divider()
