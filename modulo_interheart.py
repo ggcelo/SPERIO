@@ -163,12 +163,12 @@ def mostrar_interheart():
 
             st.session_state["dados_interheart"]["carne_aves"] = carne_aves
 
+
+            # Como os dados utilizados no cálculo mudaram,
+            # o resultado anterior do INTERHEART deve ser recalculado
+            st.session_state["avaliacao"]["interheart"] = None
             st.success("Dados do INTERHEART salvos.")
 
-        st.write(
-        "Dados do INTERHEART salvos:",
-        st.session_state["dados_interheart"]
-    )
     
     if st.button("Calcular INTERHEART"):
 
@@ -191,14 +191,30 @@ def mostrar_interheart():
             or diabetes is None
             or tabagismo is None
             or None in dados_interheart.values()
-        ):
+            or (
+                    tabagismo in [
+                        "Fumante atual",
+                        "Ex-fumante há 12 meses ou menos"
+                    ]
+                    and cigarros_dia is None
+                )
+                or None in dados_interheart.values()
+            ):
+        
             st.error(
                 "Preencha e salve todos os dados necessários "
                 "antes de calcular o INTERHEART."
             )   
         else:
 
-            rcq = round(cintura / quadril, 3)
+            # Calcula a relação cintura-quadril sem arredondar.
+            # Esse valor será utilizado para determinar a pontuação.
+            rcq_calculo = cintura / quadril
+
+
+            # Cria uma versão arredondada somente para
+            # apresentar o resultado ao usuário.
+            rcq = round(rcq_calculo, 3)
 
             pontos_itens = {}
 
@@ -214,14 +230,21 @@ def mostrar_interheart():
                 pontos_itens["idade_sexo"] = 0
 
 
-            # Tabagismo
+           # Tabagismo
             if tabagismo == "Nunca fumou":
+
                 pontos_itens["tabagismo"] = 0
 
+
             elif tabagismo == "Ex-fumante há mais de 12 meses":
+
                 pontos_itens["tabagismo"] = 2
 
-            else:
+
+            elif tabagismo in [
+                "Fumante atual",
+                "Ex-fumante há 12 meses ou menos"
+            ]:
 
                 if cigarros_dia <= 5:
                     pontos_itens["tabagismo"] = 2
@@ -267,11 +290,13 @@ def mostrar_interheart():
                 pontos_itens["historico_parental_infarto"] = 0
 
 
-            # Relação cintura-quadril
-            if rcq < 0.873:
+           # Relação cintura-quadril
+            # Utilizamos o valor sem arredondamento para
+            # não alterar a classificação perto dos limites.
+            if rcq_calculo < 0.873:
                 pontos_itens["rcq"] = 0
 
-            elif rcq < 0.964:
+            elif rcq_calculo < 0.964:
                 pontos_itens["rcq"] = 2
 
             else:

@@ -169,14 +169,15 @@ with st.expander(
             [
                 "Nunca fumou",
                 "Ex-fumante há mais de 12 meses",
-                "Fumante atual ou nos últimos 12 meses"
+                "Ex-fumante há 12 meses ou menos",
+                "Fumante atual"
             ],
             index=None,
             placeholder="Selecione"
         )
 
         cigarros_dia_digitado = st.number_input(
-            "Média de cigarros por dia:",
+        "Média de cigarros por dia (atual ou antes de parar):",
             min_value=0,
             max_value=100,
             value=None,
@@ -209,10 +210,18 @@ if salvar_clinicos:
         st.error("Informe a situação de tabagismo.")
 
     elif (
-        tabagismo_digitado == "Fumante atual ou nos últimos 12 meses"
-        and cigarros_dia_digitado is None
-    ):
-        st.error("Informe a média de cigarros por dia.")
+            tabagismo_digitado in [
+                "Fumante atual",
+                "Ex-fumante há 12 meses ou menos"
+            ]
+            and (
+                cigarros_dia_digitado is None
+                or cigarros_dia_digitado == 0
+            )
+        ):
+            st.error(
+                "Informe uma média de cigarros por dia maior que zero."
+            )
     
     else:
         imc = round(
@@ -229,7 +238,10 @@ if salvar_clinicos:
         st.session_state["dados_clinicos"]["tabagismo"] = tabagismo_digitado
 
         #só salvar cigarros/dia se for fumante atual ou nos últimos 12 meses
-        if tabagismo_digitado == "Fumante atual ou nos últimos 12 meses":
+        if tabagismo_digitado in [
+            "Fumante atual",
+            "Ex-fumante há 12 meses ou menos"
+        ]:
 
             st.session_state["dados_clinicos"]["cigarros_dia"] = (
                 cigarros_dia_digitado

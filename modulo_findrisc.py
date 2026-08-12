@@ -73,6 +73,10 @@ def mostrar_findrisc():
             st.session_state["dados_findrisc"]["glicemia_elevada"] = glicemia_elevada
             st.session_state["dados_findrisc"]["historico_familiar"] = historico_familiar
 
+            # Como os dados utilizados no cálculo mudaram,
+            # o resultado anterior do FINDRISC deve ser recalculado
+            st.session_state["avaliacao"]["findrisc"] = None
+
             st.success("Dados do FINDRISC salvos.")
 
     if st.button("Calcular FINDRISC"):
@@ -82,11 +86,20 @@ def mostrar_findrisc():
 
         imc = st.session_state["dados_clinicos"]["imc"]
         cintura = st.session_state["dados_clinicos"]["cintura"]
+        diabetes = st.session_state["dados_clinicos"]["diabetes"]
 
         dados_findrisc = st.session_state["dados_findrisc"]
 
+        if diabetes == "Sim":
 
-        if (
+            st.session_state["avaliacao"]["findrisc"] = None
+
+            st.warning( 
+                "O FINDRISC não é aplicado porque o caso possui "
+                "diabetes já diagnosticado."
+            )
+
+        elif (
             idade is None
             or sexo is None
             or imc is None
@@ -121,7 +134,7 @@ def mostrar_findrisc():
             if imc < 25:
                 pontos += 0
 
-            elif imc < 30:
+            elif imc <= 30:
                 pontos += 1
 
             else:

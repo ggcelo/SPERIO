@@ -1044,7 +1044,7 @@ def mostrar_modulo_periodontal():
 
 
             if (
-                tabagismo == "Fumante atual ou nos últimos 12 meses"
+                tabagismo == "Fumante atual"
                 and cigarros_dia is None
             ):
 
@@ -1084,7 +1084,7 @@ def mostrar_modulo_periodontal():
             # TABAGISMO
             # -------------------------
 
-            if tabagismo == "Fumante atual ou nos últimos 12 meses":
+            if tabagismo == "Fumante atual":
 
                 if cigarros_dia is None:
 
