@@ -5,10 +5,7 @@ def mostrar_modulo_periodontal():
     st.subheader("Classificação periodontal AAP/EFP")
 
 
-    st.write(
-        "Dados periodontais salvos:",
-        st.session_state["dados_periodontais"]
-    )
+
 
     st.markdown("### Estágio — critérios de severidade")
 
@@ -64,14 +61,6 @@ def mostrar_modulo_periodontal():
         # o resultado periodontal anterior deve ser recalculado
         st.session_state["avaliacao"]["periodontal"] = None
 
-    st.write(
-        "Severidade salva:",
-        {
-            "CAL": st.session_state["dados_periodontais"]["cal"],
-            "%PBL": st.session_state["avaliacao"]["pbl"],
-            "Dentes perdidos": st.session_state["dados_periodontais"]["dentes_perdidos"]
-        }
-    )
 
 
     st.markdown("### Estágio — fatores de complexidade")
@@ -829,7 +818,7 @@ def mostrar_modulo_periodontal():
                     dados_ausentes_estagio
                 )
 
-                
+
             # CALCULA EXTENSÃO E DISTRIBUIÇÃO
 
     st.markdown("### Classificação da extensão e distribuição")
@@ -1021,7 +1010,15 @@ def mostrar_modulo_periodontal():
             st.session_state["avaliacao"]["periodontal"][
                 "razao_pbl_idade"
             ] = razao_pbl_idade
-
+            
+            # Se o grau foi determinado apenas pelo fenótipo,
+            # consideramos esse grau-base provisório,
+            # pois faltaram evidências direta e indireta por %PBL/idade
+            st.session_state["avaliacao"]["periodontal"][
+                "grau_base_provisorio"
+            ] = (
+                criterio_grau_base == "Fenótipo"
+            )
 
             st.success(
                 "Grau-base calculado com sucesso."
@@ -1056,7 +1053,13 @@ def mostrar_modulo_periodontal():
                 resultado_periodontal["razao_pbl_idade"]
             )
 
+        if resultado_periodontal["grau_base_provisorio"]:
 
+            st.warning(
+                "O grau-base é provisório, pois foi estimado "
+                "somente pelo fenótipo clínico."
+            )
+            
         st.info(
             "Resultado parcial. Tabagismo e diabetes "
             "ainda serão aplicados como modificadores."
@@ -1091,6 +1094,48 @@ def mostrar_modulo_periodontal():
             diabetes = st.session_state["dados_clinicos"]["diabetes"]
 
             hba1c = dados_periodontais["hba1c"]
+
+            # Lista das informações ausentes que podem
+            # interferir na graduação final
+            dados_ausentes_grau = []
+
+
+            if tabagismo is None:
+
+                dados_ausentes_grau.append(
+                    "Situação de tabagismo"
+                )
+
+
+            if (
+                tabagismo == "Fumante atual ou nos últimos 12 meses"
+                and cigarros_dia is None
+            ):
+
+                dados_ausentes_grau.append(
+                    "Média de cigarros por dia"
+                )
+
+
+            if diabetes is None:
+
+                dados_ausentes_grau.append(
+                    "Situação de diabetes"
+                )
+
+
+            elif diabetes == "Não sabe":
+
+                dados_ausentes_grau.append(
+                    "Situação de diabetes confirmada"
+                )
+
+
+            elif diabetes == "Sim" and hba1c is None:
+
+                dados_ausentes_grau.append(
+                    "HbA1c"
+                )
 
 
             # Começamos pelo grau obtido na etapa anterior
@@ -1177,10 +1222,35 @@ def mostrar_modulo_periodontal():
                 modificadores_grau
             )
 
+            resultado_periodontal["dados_ausentes_grau"] = (
+                dados_ausentes_grau
+            )
+
+
+            resultado_periodontal["grau_provisorio"] = (
+                resultado_periodontal["grau_base_provisorio"]
+                or len(dados_ausentes_grau) > 0
+            )
+
 
             st.success(
                 "Modificadores aplicados com sucesso."
             )
+
+            if resultado_periodontal["grau_provisorio"]:
+
+                st.warning(
+                    "O grau periodontal é provisório, pois existem "
+                    "informações ausentes que podem alterar a graduação."
+                )
+
+
+                if len(dados_ausentes_grau) > 0:
+
+                    st.write(
+                        "Dados ausentes:",
+                        dados_ausentes_grau
+                    )
             resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
 
@@ -1257,6 +1327,25 @@ def mostrar_modulo_periodontal():
 
             grau = resultado_periodontal["grau"]
 
+            # Verifica se o estágio ou o grau
+            # foram calculados com informações ausentes
+            estagio_provisorio = resultado_periodontal.get(
+                "estagio_provisorio",
+                False
+            )
+
+            grau_provisorio = resultado_periodontal.get(
+                "grau_provisorio",
+                False
+            )
+
+
+            # Se qualquer uma das duas partes for provisória,
+            # a classificação periodontal completa também será
+            classificacao_provisoria = (
+                estagio_provisorio
+                or grau_provisorio
+            )
 
             classificacao_final = (
                 f"Periodontite Estágio {estagio}, "
@@ -1269,10 +1358,22 @@ def mostrar_modulo_periodontal():
                 "classificacao_final"
             ] = classificacao_final
 
+            resultado_periodontal[
+                "classificacao_provisoria"
+            ] = classificacao_provisoria
 
-            st.success(
-                "Classificação periodontal final gerada com sucesso."
-            )
+            if classificacao_provisoria:
+
+                st.warning(
+                    "Classificação periodontal gerada, mas considerada "
+                    "provisória devido à ausência de informações."
+                )
+
+            else:
+
+                st.success(
+                    "Classificação periodontal final gerada com sucesso."
+                )
             resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
 
@@ -1298,8 +1399,81 @@ def mostrar_modulo_periodontal():
             resultado_periodontal["grau"]
         )
 
-        st.success(
-            resultado_periodontal["classificacao_final"]
+        if resultado_periodontal.get(
+            "classificacao_provisoria",
+            False
+        ):
+
+            st.warning(
+                resultado_periodontal["classificacao_final"]
+                + " — CLASSIFICAÇÃO PROVISÓRIA"
+            )
+
+        else:
+
+            st.success(
+                resultado_periodontal["classificacao_final"]
+            )
+
+        st.write(
+            "Critério de severidade:",
+            resultado_periodontal["criterio_severidade"]
         )
+
+
+        if len(
+            resultado_periodontal["fatores_complexidade"]
+        ) > 0:
+
+            st.write(
+                "Fatores de complexidade identificados:",
+                resultado_periodontal["fatores_complexidade"]
+            )
+
+        st.write(
+            "Critério do grau-base:",
+            resultado_periodontal["criterio_grau_base"]
+        )
+
+
+        if len(
+            resultado_periodontal["modificadores_grau"]
+        ) > 0:
+
+            st.write(
+                "Modificadores do grau identificados:",
+                resultado_periodontal["modificadores_grau"]
+            )
+
+        if resultado_periodontal.get(
+            "classificacao_provisoria",
+            False
+        ):
+
+            dados_ausentes_estagio = resultado_periodontal.get(
+                "dados_ausentes_estagio",
+                []
+            )
+
+            dados_ausentes_grau = resultado_periodontal.get(
+                "dados_ausentes_grau",
+                []
+            )
+
+
+            if len(dados_ausentes_estagio) > 0:
+
+                st.write(
+                    "Dados ausentes relacionados ao estágio:",
+                    dados_ausentes_estagio
+                )
+
+
+            if len(dados_ausentes_grau) > 0:
+
+                st.write(
+                    "Dados ausentes relacionados ao grau:",
+                    dados_ausentes_grau
+                )
 
         st.divider()
