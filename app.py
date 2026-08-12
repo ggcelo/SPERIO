@@ -24,54 +24,47 @@ st.write(
 st.divider()
 
 
-modulo = st.selectbox(
-    "Escolha um módulo:",
-    [
-        "Classificação periodontal",
-        "FINDRISC",
-        "INTERHEART",
-        "Análise radiográfica"
-    ]
-)
-
-st.write("Módulo selecionado:", modulo)
-
-
 # INICIALIZA OS DICIONÁRIOS DO SESSION_STATE
 inicializar_session_state()
 
 
-# MÓDULO RADIOGRÁFICO
-if modulo == "Análise radiográfica":
-    mostrar_modulo_radiografico()
+# MÓDULO RADIOGRÁFICO -> foi retirado daqui, movido tudo para o final da pagina
 
+dados_caso_preenchidos = (
+    st.session_state["dados_caso"]["codigo"] is not None
+    and st.session_state["dados_caso"]["idade"] is not None
+    and st.session_state["dados_caso"]["sexo"] is not None
+)
 
-st.subheader("Dados do caso")
+with st.expander(
+    "Dados do caso",
+    expanded=not dados_caso_preenchidos
+):
 
-with st.form("form_dados_caso"): #tudo dentro do with fica armazenado dentro do formulario
+    with st.form("form_dados_caso"): #tudo dentro do with fica armazenado dentro do formulario
 
-    codigo_digitado = st.text_input(
-        "Código do caso:"
-    )
+        codigo_digitado = st.text_input(
+            "Código do caso:"
+        )
 
-    idade_digitada = st.number_input(
-        "Idade:",
-        min_value=1,
-        max_value=120,
-        value=None,
-        step=1
-    )
+        idade_digitada = st.number_input(
+            "Idade:",
+            min_value=1,
+            max_value=120,
+            value=None,
+            step=1
+        )
 
-    sexo_digitado = st.selectbox(
-        "Sexo:",
-        ["Feminino", "Masculino"],
-        index=None,
-        placeholder="Selecione"
-    )
+        sexo_digitado = st.selectbox(
+            "Sexo:",
+            ["Feminino", "Masculino"],
+            index=None,
+            placeholder="Selecione"
+        )
 
-    salvar_dados = st.form_submit_button(
-        "Salvar dados do caso"
-    )
+        salvar_dados = st.form_submit_button(
+            "Salvar dados do caso"
+        )
 
 #coloca todos os dados do formulario dentro do dados_caso
 if salvar_dados:
@@ -91,75 +84,86 @@ if salvar_dados:
         st.session_state["dados_caso"]["sexo"] = sexo_digitado
 
         st.success("Dados do caso salvos.")
-    st.write(st.session_state["dados_caso"])
 
 st.divider()
 
-st.subheader("Dados clínicos")
+dados_clinicos_preenchidos = (
+    st.session_state["dados_clinicos"]["peso"] is not None
+    and st.session_state["dados_clinicos"]["altura"] is not None
+    and st.session_state["dados_clinicos"]["cintura"] is not None
+    and st.session_state["dados_clinicos"]["quadril"] is not None
+    and st.session_state["dados_clinicos"]["diabetes"] is not None
+    and st.session_state["dados_clinicos"]["tabagismo"] is not None
+)
 
-with st.form("form_dados_clinicos"):
+with st.expander(
+    "Dados clínicos compartilhados",
+    expanded=not dados_clinicos_preenchidos
+):
 
-    peso_digitado = st.number_input(
-        "Peso (kg):",
-        min_value=1.0,
-        max_value=300.0,
-        value=None,
-        step=0.1
-    )
+    with st.form("form_dados_clinicos"):
 
-    altura_digitada = st.number_input(
-        "Altura (m):",
-        min_value=0.5,
-        max_value=2.5,
-        value=None,
-        step=0.01
-    )
+        peso_digitado = st.number_input(
+            "Peso (kg):",
+            min_value=1.0,
+            max_value=300.0,
+            value=None,
+            step=0.1
+        )
 
-    cintura_digitada = st.number_input(
-        "Circunferência da cintura (cm):",
-        min_value=20.0,
-        max_value=250.0,
-        value=None,
-        step=0.1
-    )
+        altura_digitada = st.number_input(
+            "Altura (m):",
+            min_value=0.5,
+            max_value=2.5,
+            value=None,
+            step=0.01
+        )
 
-    quadril_digitado = st.number_input(
-        "Circunferência do quadril (cm):",
-        min_value=20.0,
-        max_value=250.0,
-        value=None,
-        step=0.1
-    )
+        cintura_digitada = st.number_input(
+            "Circunferência da cintura (cm):",
+            min_value=20.0,
+            max_value=250.0,
+            value=None,
+            step=0.1
+        )
 
-    diabetes_digitado = st.selectbox(
-        "Possui diabetes diagnosticado?",
-        ["Sim", "Não", "Não sabe"],
-        index=None,
-        placeholder="Selecione"
-    )
+        quadril_digitado = st.number_input(
+            "Circunferência do quadril (cm):",
+            min_value=20.0,
+            max_value=250.0,
+            value=None,
+            step=0.1
+        )
 
-    tabagismo_digitado = st.selectbox(
-        "Situação de tabagismo:",
-        [
-            "Nunca fumou",
-            "Ex-fumante há mais de 12 meses",
-            "Fumante atual ou nos últimos 12 meses"
-        ],
-        index=None,
-        placeholder="Selecione"
-    )
+        diabetes_digitado = st.selectbox(
+            "Possui diabetes diagnosticado?",
+            ["Sim", "Não", "Não sabe"],
+            index=None,
+            placeholder="Selecione"
+        )
 
-    cigarros_dia_digitado = st.number_input(
-        "Média de cigarros por dia:",
-        min_value=0,
-        max_value=100,
-        value=None,
-        step=1
-    )
+        tabagismo_digitado = st.selectbox(
+            "Situação de tabagismo:",
+            [
+                "Nunca fumou",
+                "Ex-fumante há mais de 12 meses",
+                "Fumante atual ou nos últimos 12 meses"
+            ],
+            index=None,
+            placeholder="Selecione"
+        )
 
-    salvar_clinicos = st.form_submit_button(
-        "Salvar dados clínicos"
-    )
+        cigarros_dia_digitado = st.number_input(
+            "Média de cigarros por dia:",
+            min_value=0,
+            max_value=100,
+            value=None,
+            step=1
+        )
+
+        salvar_clinicos = st.form_submit_button(
+            "Salvar dados clínicos"
+        )
 
 
 if salvar_clinicos:
@@ -206,18 +210,36 @@ if salvar_clinicos:
         st.success("Dados clínicos salvos.")
 
 
-st.write(
-    "Dados clínicos salvos:",
-    st.session_state["dados_clinicos"]
-)
-
 st.divider()
 
+modulo = st.selectbox(
+    "Escolha um módulo:",
+    [
+        "Análise radiográfica",
+        "Classificação periodontal",
+        "FINDRISC",
+        "INTERHEART",
+        "Relatório"
+    ]
+)
 
-mostrar_findrisc()
+st.write("Módulo selecionado:", modulo)
 
-mostrar_interheart()
+# -------------------------
+# EXIBIÇÃO DOS MÓDULOS  
+# -------------------------
 
-mostrar_modulo_periodontal()
+if modulo == "Análise radiográfica":
+    mostrar_modulo_radiografico()
 
-mostrar_relatorio()
+elif modulo == "Classificação periodontal":
+    mostrar_modulo_periodontal()
+
+elif modulo == "FINDRISC":
+    mostrar_findrisc()
+
+elif modulo == "INTERHEART":
+    mostrar_interheart()
+
+elif modulo == "Relatório":
+    mostrar_relatorio()
