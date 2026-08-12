@@ -130,17 +130,6 @@ def mostrar_modulo_periodontal():
 
         st.success("Fatores de complexidade salvos.")
 
-
-    st.write(
-        "Complexidade salva:",
-        {
-            "Sondagem": st.session_state["dados_periodontais"]["sondagem"],
-            "Perda vertical": st.session_state["dados_periodontais"]["perda_vertical"],
-            "Furca": st.session_state["dados_periodontais"]["furca"],
-            "Defeito de rebordo": st.session_state["dados_periodontais"]["defeito_rebordo"]
-        }
-    )
-
     st.markdown("#### Outros fatores de complexidade")
 
 
@@ -229,30 +218,6 @@ def mostrar_modulo_periodontal():
 
         st.success("Outros fatores de complexidade salvos.")
 
-
-    st.write(
-        "Outros fatores de complexidade salvos:",
-        {
-            "Disfunção mastigatória":
-                st.session_state["dados_periodontais"]["disfuncao_mastigatoria"],
-
-            "Mobilidade":
-                st.session_state["dados_periodontais"]["mobilidade"],
-
-            "Dentes remanescentes":
-                st.session_state["dados_periodontais"]["dentes_remanescentes"],
-
-            "Colapso de mordida":
-                st.session_state["dados_periodontais"]["colapso_mordida"],
-
-            "Migração dentária":
-                st.session_state["dados_periodontais"]["migracao_dentaria"],
-
-            "Abertura em leque":
-                st.session_state["dados_periodontais"]["abertura_leque"]
-        }
-    )
-
     st.markdown("### Extensão e distribuição")
 
 
@@ -294,21 +259,6 @@ def mostrar_modulo_periodontal():
 
         st.success("Dados de extensão e distribuição salvos.")
 
-
-    st.write(
-        "Extensão e distribuição salvas:",
-        {
-            "Percentual de dentes envolvidos":
-                st.session_state["dados_periodontais"][
-                    "percentual_dentes_envolvidos"
-                ],
-
-            "Padrão molar/incisivo":
-                st.session_state["dados_periodontais"][
-                    "padrao_molar_incisivo"
-                ]
-        }
-    )
 
     st.markdown("### Grau — progressão e modificadores")
 
@@ -401,20 +351,6 @@ def mostrar_modulo_periodontal():
 
             st.success("Dados para graduação salvos.")
 
-
-    st.write(
-        "Dados para graduação salvos:",
-        {
-            "Progressão em 5 anos":
-                st.session_state["dados_periodontais"]["progressao_5_anos"],
-
-            "Fenótipo":
-                st.session_state["dados_periodontais"]["fenotipo"],
-
-            "HbA1c":
-                st.session_state["dados_periodontais"]["hba1c"]
-        }
-    )
 
     #CALCULOS DE CLSSIFICAÇÃO DO ESTÁGIO - agora ficou pegado
     st.markdown("### Classificação do estágio")
