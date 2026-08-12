@@ -588,6 +588,55 @@ def mostrar_modulo_periodontal():
 
             dados_periodontais = st.session_state["dados_periodontais"]
 
+            # Verifica quais informações capazes de alterar
+            # o estágio ainda não foram informadas
+            campos_estagio = {
+                "dentes_perdidos":
+                    "Dentes perdidos atribuíveis à periodontite",
+
+                "sondagem":
+                    "Profundidade máxima de sondagem",
+
+                "perda_vertical":
+                    "Perda óssea vertical",
+
+                "furca":
+                    "Envolvimento de furca",
+
+                "defeito_rebordo":
+                    "Defeito de rebordo",
+
+                "disfuncao_mastigatoria":
+                    "Disfunção mastigatória",
+
+                "mobilidade":
+                    "Mobilidade dentária",
+
+                "dentes_remanescentes":
+                    "Número de dentes remanescentes",
+
+                "colapso_mordida":
+                    "Colapso de mordida",
+
+                "migracao_dentaria":
+                    "Migração dentária",
+
+                "abertura_leque":
+                    "Abertura em leque"
+            }
+
+
+            dados_ausentes_estagio = []
+
+
+            for campo, nome_campo in campos_estagio.items():
+
+                if dados_periodontais[campo] is None:
+
+                    dados_ausentes_estagio.append(
+                        nome_campo
+                    )
+
             estagio_final = resultado_periodontal["estagio_severidade"]
 
             fatores_complexidade = []
@@ -752,10 +801,35 @@ def mostrar_modulo_periodontal():
                 fatores_complexidade
             )
 
+            # Guarda quais critérios não foram informados
+            resultado_periodontal["dados_ausentes_estagio"] = (
+                dados_ausentes_estagio
+            )
+
+
+            # Se existe pelo menos um dado ausente,
+            # o estágio deve ser considerado provisório
+            resultado_periodontal["estagio_provisorio"] = (
+                len(dados_ausentes_estagio) > 0
+            )
+
             st.success(
                 "Fatores de complexidade aplicados com sucesso."
             )
 
+            if len(dados_ausentes_estagio) > 0:
+
+                st.warning(
+                    "O estágio calculado é provisório, pois existem "
+                    "fatores de complexidade não informados."
+                )
+
+                st.write(
+                    "Dados ausentes:",
+                    dados_ausentes_estagio
+                )
+
+                
             # CALCULA EXTENSÃO E DISTRIBUIÇÃO
 
     st.markdown("### Classificação da extensão e distribuição")
