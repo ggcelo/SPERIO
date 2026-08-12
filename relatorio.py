@@ -10,6 +10,8 @@ def mostrar_relatorio():
     # Pegamos os dados principais já armazenados
     dados_caso = st.session_state["dados_caso"]
 
+    dados_clinicos = st.session_state["dados_clinicos"]
+
     resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
     resultado_findrisc = st.session_state["avaliacao"]["findrisc"]
@@ -17,6 +19,8 @@ def mostrar_relatorio():
     resultado_interheart = st.session_state["avaliacao"]["interheart"]
 
     dados_radiograficos = st.session_state["dados_radiograficos"]
+
+    pbl = st.session_state["avaliacao"]["pbl"]
 
     st.subheader("Identificação do caso")
 
@@ -38,7 +42,6 @@ def mostrar_relatorio():
 
     st.subheader("Resumo dos resultados")
 
-
     # CLASSIFICAÇÃO PERIODONTAL
 
     if (
@@ -58,6 +61,22 @@ def mostrar_relatorio():
         )
 
 
+    # ANÁLISE RADIOGRÁFICA
+
+    if pbl is not None:
+
+        st.write(
+            "Perda óssea radiográfica (%PBL):",
+            f"{pbl:.2f}%"
+        )
+
+    else:
+
+        st.write(
+            "Perda óssea radiográfica (%PBL): ainda não calculada."
+        )
+
+
     # FINDRISC
 
     if resultado_findrisc is not None:
@@ -67,6 +86,12 @@ def mostrar_relatorio():
             resultado_findrisc["pontos"],
             "pontos —",
             resultado_findrisc["classificacao"]
+        )
+
+    elif dados_clinicos["diabetes"] == "Sim":
+
+        st.write(
+            "FINDRISC: não aplicável — diabetes já diagnosticado."
         )
 
     else:
@@ -92,64 +117,186 @@ def mostrar_relatorio():
         st.write(
             "INTERHEART: ainda não calculado."
         )
+
+
+    
     # DETALHAMENTO DOS RESULTADOS
+
+    # -------------------------
+    # DETALHAMENTO PERIODONTAL
+    # -------------------------
 
     st.subheader("Detalhamento periodontal")
 
 
-    if resultado_periodontal is not None:
+    if (
+        resultado_periodontal is not None
+        and "classificacao_final" in resultado_periodontal
+    ):
 
-        if "estagio" in resultado_periodontal:
+        st.write(
+            "Estágio:",
+            resultado_periodontal["estagio"]
+        )
 
-            st.write(
-                "Estágio final:",
-                resultado_periodontal["estagio"]
+        st.write(
+            "Extensão/distribuição:",
+            resultado_periodontal["extensao_distribuicao"]
+        )
+
+        st.write(
+            "Grau:",
+            resultado_periodontal["grau"]
+        )
+
+
+        # Informa se a classificação é definitiva ou provisória
+        if resultado_periodontal.get(
+            "classificacao_provisoria",
+            False
+        ):
+
+            st.warning(
+                "Classificação provisória."
+            )
+
+        else:
+
+            st.success(
+                "Classificação definitiva."
             )
 
 
-        if "criterio_severidade" in resultado_periodontal:
+        # Critério que determinou a severidade
+        st.write(
+            "Critério de severidade:",
+            resultado_periodontal["criterio_severidade"]
+        )
+
+
+        # Fatores de complexidade
+        fatores = resultado_periodontal[
+            "fatores_complexidade"
+        ]
+
+        if len(fatores) > 0:
 
             st.write(
-                "Critério principal de severidade:",
-                resultado_periodontal["criterio_severidade"]
+                "Fatores de complexidade identificados:"
+            )
+
+            for fator in fatores:
+
+                st.write(
+                    "-",
+                    fator
+                )
+
+        else:
+
+            st.write(
+                "Fatores de complexidade identificados: nenhum."
             )
 
 
-        if "extensao_distribuicao" in resultado_periodontal:
+        # Critério utilizado para definir o grau-base
+        st.write(
+            "Critério utilizado para o grau-base:",
+            resultado_periodontal["criterio_grau_base"]
+        )
+
+
+        # Relação %PBL / idade
+        if resultado_periodontal["razao_pbl_idade"] is not None:
 
             st.write(
-                "Extensão/distribuição:",
-                resultado_periodontal["extensao_distribuicao"]
+                "Relação %PBL / idade:",
+                resultado_periodontal["razao_pbl_idade"]
             )
 
 
-        if "grau" in resultado_periodontal:
+        # Modificadores do grau
+        modificadores = resultado_periodontal[
+            "modificadores_grau"
+        ]
+
+        if len(modificadores) > 0:
 
             st.write(
-                "Grau final:",
-                resultado_periodontal["grau"]
+                "Modificadores do grau identificados:"
+            )
+
+            for modificador in modificadores:
+
+                st.write(
+                    "-",
+                    modificador
+                )
+
+        else:
+
+            st.write(
+                "Modificadores do grau identificados: nenhum."
             )
 
 
-        if "criterio_grau_base" in resultado_periodontal:
+        # Se a classificação for provisória,
+        # mostramos quais informações estavam ausentes
+        if resultado_periodontal.get(
+            "classificacao_provisoria",
+            False
+        ):
 
-            st.write(
-                "Critério utilizado para o grau-base:",
-                resultado_periodontal["criterio_grau_base"]
+            dados_ausentes_estagio = resultado_periodontal.get(
+                "dados_ausentes_estagio",
+                []
             )
+
+            dados_ausentes_grau = resultado_periodontal.get(
+                "dados_ausentes_grau",
+                []
+            )
+
+
+            if len(dados_ausentes_estagio) > 0:
+
+                st.write(
+                    "Dados ausentes relacionados ao estágio:"
+                )
+
+                for dado in dados_ausentes_estagio:
+
+                    st.write(
+                        "-",
+                        dado
+                    )
+
+
+            if len(dados_ausentes_grau) > 0:
+
+                st.write(
+                    "Dados ausentes relacionados ao grau:"
+                )
+
+                for dado in dados_ausentes_grau:
+
+                    st.write(
+                        "-",
+                        dado
+                    )
 
     else:
 
         st.write(
-            "Ainda não existem resultados periodontais."
+            "Ainda não existem resultados periodontais completos."
         )
 
-
     # -------------------------
-    # RESULTADO RADIOGRÁFICO
+    # DETALHAMENTO RADIOGRÁFICO
     # -------------------------
 
-    pbl = st.session_state["avaliacao"]["pbl"]
+    st.subheader("Detalhamento radiográfico")
+
 
     dente_determinante = dados_radiograficos[
         "dente_determinante"
@@ -157,20 +304,19 @@ def mostrar_relatorio():
 
     superficie_determinante = dados_radiograficos[
         "superficie_determinante"
-]
+    ]
 
 
     if pbl is not None:
 
         st.write(
-            "Perda óssea radiográfica (%PBL):",
-            pbl,
-            "%"
+            "Perda óssea radiográfica máxima (%PBL):",
+            f"{pbl:.2f}%"
         )
 
         st.write(
-        "Objeto/dente determinante:",
-        dente_determinante
+            "Objeto/dente determinante:",
+            dente_determinante
         )
 
         st.write(
@@ -181,71 +327,7 @@ def mostrar_relatorio():
     else:
 
         st.write(
-            "Perda óssea radiográfica (%PBL): não informada."
-        )
-
-
-    # Fatores de complexidade
-
-    if (
-        resultado_periodontal is not None
-        and "fatores_complexidade" in resultado_periodontal
-    ):
-
-        fatores = resultado_periodontal["fatores_complexidade"]
-
-        if len(fatores) > 0:
-
-            st.write(
-                "Fatores de complexidade identificados:"
-            )
-
-            for fator in fatores:
-                st.write("-", fator)
-
-        else:
-
-            st.write(
-                "Fatores de complexidade identificados: nenhum."
-            )
-
-
-    # Modificadores do grau
-
-    if (
-        resultado_periodontal is not None
-        and "modificadores_grau" in resultado_periodontal
-    ):
-
-        modificadores = resultado_periodontal["modificadores_grau"]
-
-        if len(modificadores) > 0:
-
-            st.write(
-                "Modificadores do grau identificados:"
-            )
-
-            for modificador in modificadores:
-                st.write("-", modificador)
-
-        else:
-
-            st.write(
-                "Modificadores do grau identificados: nenhum."
-            )
-
-
-    # Relação %PBL / idade
-
-    if (
-        resultado_periodontal is not None
-        and "razao_pbl_idade" in resultado_periodontal
-        and resultado_periodontal["razao_pbl_idade"] is not None
-    ):
-
-        st.write(
-            "Relação %PBL / idade:",
-            resultado_periodontal["razao_pbl_idade"]
+            "Análise radiográfica ainda não concluída."
         )
 
 
@@ -270,6 +352,15 @@ def mostrar_relatorio():
             "Risco estimado em 10 anos:",
             resultado_findrisc["estimativa"]
         )
+
+
+    elif dados_clinicos["diabetes"] == "Sim":
+
+        st.write(
+            "FINDRISC não aplicável, pois foi informado "
+            "diabetes já diagnosticado."
+        )
+
 
     else:
 

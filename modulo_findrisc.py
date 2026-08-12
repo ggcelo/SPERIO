@@ -229,19 +229,10 @@ def mostrar_findrisc():
 
         st.subheader("Resultado FINDRISC")
 
-        st.write(
-            "Pontuação:",
-            resultado_findrisc["pontos"]
-        )
+        st.write("Pontuação:", resultado_findrisc["pontos"])
 
-        st.write(
-            "Classificação:",
-            resultado_findrisc["classificacao"]
-        )
+        st.write("Classificação:", resultado_findrisc["classificacao"])
 
-        st.write(
-            "Risco estimado em 10 anos:",
-            resultado_findrisc["estimativa"]
-        )
+        st.write("Risco estimado em 10 anos:", resultado_findrisc["estimativa"])
 
     st.divider()
