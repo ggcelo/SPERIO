@@ -16,6 +16,7 @@ def mostrar_relatorio():
 
     resultado_interheart = st.session_state["avaliacao"]["interheart"]
 
+    dados_radiograficos = st.session_state["dados_radiograficos"]
 
     st.subheader("Identificação do caso")
 
@@ -144,9 +145,19 @@ def mostrar_relatorio():
         )
 
 
-    # %PBL
+    # -------------------------
+    # RESULTADO RADIOGRÁFICO
+    # -------------------------
 
     pbl = st.session_state["avaliacao"]["pbl"]
+
+    dente_determinante = dados_radiograficos[
+        "dente_determinante"
+    ]
+
+    superficie_determinante = dados_radiograficos[
+        "superficie_determinante"
+]
 
 
     if pbl is not None:
@@ -155,6 +166,16 @@ def mostrar_relatorio():
             "Perda óssea radiográfica (%PBL):",
             pbl,
             "%"
+        )
+
+        st.write(
+        "Objeto/dente determinante:",
+        dente_determinante
+        )
+
+        st.write(
+            "Superfície determinante:",
+            superficie_determinante
         )
 
     else:
@@ -731,6 +752,14 @@ def mostrar_relatorio():
             f"INTERHEART: {resultado_interheart['pontos']} pontos - "
             f"{resultado_interheart['classificacao']}\n"
             f"%PBL: {pbl}%\n"
+        )
+
+        texto_relatorio += (
+            "\n"
+            "ANÁLISE RADIOGRÁFICA\n"
+            f"%PBL máximo: {pbl}%\n"
+            f"Objeto/dente determinante: {dente_determinante}\n"
+            f"Superfície determinante: {superficie_determinante}\n"
         )
 
 

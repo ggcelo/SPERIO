@@ -318,6 +318,10 @@ def mostrar_modulo_radiografico():
 
             st.session_state["avaliacao"]["pbl"] = None
 
+            # Como o %PBL mudou, a classificação periodontal
+            # anterior pode não ser mais válida
+            st.session_state["avaliacao"]["periodontal"] = None
+
         # Guarda o nome do arquivo
         st.session_state["dados_radiograficos"][
             "nome_arquivo"
@@ -926,6 +930,9 @@ def mostrar_modulo_radiografico():
                                 "pbl"
                             ] = None
 
+                            st.session_state["avaliacao"][
+                                "periodontal"
+                            ] = None
 
                             st.warning(
                                 "Nenhum %PBL válido pôde ser calculado."
@@ -953,6 +960,11 @@ def mostrar_modulo_radiografico():
                                 "pbl"
                             ] = pbl_maximo_analise
 
+                            # O resultado periodontal deve ser recalculado
+                            # caso o %PBL tenha sido atualizado
+                            st.session_state["avaliacao"][
+                                "periodontal"
+                            ] = None
 
                             st.success(
                                 "Resultado radiográfico armazenado com sucesso."
@@ -1258,6 +1270,12 @@ def mostrar_modulo_radiografico():
                         st.session_state["avaliacao"][
                             "pbl"
                         ] = pbl_maximo_novo
+
+                        # Como o %PBL foi recalculado,
+                        # a classificação periodontal anterior é invalidada
+                        st.session_state["avaliacao"][
+                            "periodontal"
+                        ] = None
 
                         if pbl_maximo_novo is None:
 

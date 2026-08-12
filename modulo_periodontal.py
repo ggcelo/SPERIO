@@ -60,6 +60,9 @@ def mostrar_modulo_periodontal():
 
         st.success("Critérios de severidade salvos.")
 
+        # Como os dados usados na classificação mudaram,
+        # o resultado periodontal anterior deve ser recalculado
+        st.session_state["avaliacao"]["periodontal"] = None
 
     st.write(
         "Severidade salva:",
@@ -131,6 +134,10 @@ def mostrar_modulo_periodontal():
         st.session_state["dados_periodontais"]["defeito_rebordo"] = (
             defeito_rebordo
         )
+
+        # Os fatores de complexidade mudaram.
+        # A classificação anterior precisa ser recalculada
+        st.session_state["avaliacao"]["periodontal"] = None
 
         st.success("Fatores de complexidade salvos.")
 
@@ -227,6 +234,10 @@ def mostrar_modulo_periodontal():
             abertura_leque
         )
 
+        # Os fatores de complexidade mudaram.
+        # A classificação anterior precisa ser recalculada.
+        st.session_state["avaliacao"]["periodontal"] = None
+
         st.success("Outros fatores de complexidade salvos.")
 
 
@@ -287,6 +298,10 @@ def mostrar_modulo_periodontal():
         st.session_state["dados_periodontais"]["padrao_molar_incisivo"] = (
             padrao_molar_incisivo
         )
+
+        # A extensão/distribuição foi alterada.
+        # O resultado periodontal anterior deve ser recalculado.
+        st.session_state["avaliacao"]["periodontal"] = None
 
         st.success("Dados de extensão e distribuição salvos.")
 
@@ -390,6 +405,10 @@ def mostrar_modulo_periodontal():
             st.session_state["dados_periodontais"]["hba1c"] = (
                 hba1c
             )
+
+            # Os dados utilizados na graduação mudaram.
+            # O resultado periodontal anterior deve ser recalculado.
+            st.session_state["avaliacao"]["periodontal"] = None
 
             st.success("Dados para graduação salvos.")
 

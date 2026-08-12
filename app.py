@@ -78,10 +78,32 @@ if salvar_dados:
     elif sexo_digitado is None:
         st.error("Selecione o sexo.")
 
+
     else:
+        codigo_anterior = st.session_state["dados_caso"]["codigo"]
+        
+        novo_codigo = codigo_digitado.strip()
+    
+        novo_caso = (
+            codigo_anterior is not None
+            and novo_codigo != codigo_anterior
+        )
+        if novo_caso:
+
+            st.session_state.clear()
+
+            inicializar_session_state()
+        
         st.session_state["dados_caso"]["codigo"] = codigo_digitado.strip()
         st.session_state["dados_caso"]["idade"] = idade_digitada
         st.session_state["dados_caso"]["sexo"] = sexo_digitado
+
+        # Como idade ou sexo podem ter mudado,
+        # os resultados que dependem desses dados
+        # precisam ser calculados novamente
+        st.session_state["avaliacao"]["findrisc"] = None
+        st.session_state["avaliacao"]["interheart"] = None
+        st.session_state["avaliacao"]["periodontal"] = None
 
         st.success("Dados do caso salvos.")
 
@@ -205,7 +227,25 @@ if salvar_clinicos:
         st.session_state["dados_clinicos"]["imc"] = imc
         st.session_state["dados_clinicos"]["diabetes"] = diabetes_digitado
         st.session_state["dados_clinicos"]["tabagismo"] = tabagismo_digitado
-        st.session_state["dados_clinicos"]["cigarros_dia"] = cigarros_dia_digitado
+
+        #só salvar cigarros/dia se for fumante atual ou nos últimos 12 meses
+        if tabagismo_digitado == "Fumante atual ou nos últimos 12 meses":
+
+            st.session_state["dados_clinicos"]["cigarros_dia"] = (
+                cigarros_dia_digitado
+            )
+
+        else:
+
+            st.session_state["dados_clinicos"]["cigarros_dia"] = None
+
+
+        #os dados clínicos compartilhados são utilizados
+        #por diferentes módulos. Por isso, resultados
+        #anteriores precisam ser recalculados.
+        st.session_state["avaliacao"]["findrisc"] = None
+        st.session_state["avaliacao"]["interheart"] = None
+        st.session_state["avaliacao"]["periodontal"] = None
 
         st.success("Dados clínicos salvos.")
 
