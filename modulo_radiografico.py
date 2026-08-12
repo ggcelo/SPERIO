@@ -225,43 +225,23 @@ def carregar_modelo_radiografico(caminho):
 
 
 def mostrar_modulo_radiografico():
-    st.header("Análise radiográfica")
+    st.header("Análise radiográfica experimental")
 
     st.write(
-        "Envie uma radiografia periapical para análise."
+        "Carregue uma radiografia periapical, execute o modelo perio-KPT e "
+        "revise os resultados antes de continuar para a classificação "
+        "periodontal."
+    )
+
+    st.warning(
+        "Uso experimental. Os valores de %PBL exigem revisão profissional "
+        "e devem ser interpretados em conjunto com os dados clínicos."
     )
 
     modelo_radiografico = None
 
     # Verifica se o arquivo do modelo existe
-    if caminho_modelo.exists():
-
-        st.success(
-            "Modelo radiográfico encontrado."
-        )
-
-        try: #caso ache o caminho onde está, tente carregar o modelo
-
-            modelo_radiografico = carregar_modelo_radiografico( #modelo_radiografico recebe o retorno 'modelo'
-                str(caminho_modelo) #transforma em string pela compatibilidade, nao se pode usar path
-            )
-
-            st.success(
-                "Modelo radiográfico carregado com sucesso."
-            )
-
-        except Exception as erro:
-
-            st.error(
-                "O modelo radiográfico não pôde ser carregado."
-            )
-
-            st.write(
-                "Erro:",
-                str(erro)
-            )
-
-    else:
+    if not caminho_modelo.exists():
 
         st.error(
             "Modelo radiográfico não encontrado."
@@ -273,8 +253,11 @@ def mostrar_modulo_radiografico():
         )
 
 
+    st.markdown("### 1. Seleção da radiografia")
+    st.caption("Formatos aceitos: PNG, JPG ou JPEG.")
+
     imagem_radiografica = st.file_uploader(
-        "Selecione a radiografia:",
+        "Radiografia periapical:",
         type=["png", "jpg", "jpeg"]
     )
 
@@ -335,21 +318,62 @@ def mostrar_modulo_radiografico():
 
 
         # Mostra a imagem
-        st.image(
-            imagem_radiografica,
-            caption="Radiografia selecionada"
+        st.markdown("### 2. Visualização")
+
+        imagem_anotada_atual = st.session_state["dados_radiograficos"][
+            "imagem_anotada_bytes"
+        ]
+
+        if imagem_anotada_atual is None:
+            st.image(
+                imagem_radiografica,
+                caption="Radiografia original",
+                width="stretch"
+            )
+
+        else:
+            coluna_original, coluna_anotada = st.columns(2)
+
+            with coluna_original:
+                st.image(
+                    imagem_radiografica,
+                    caption="Radiografia original",
+                    width="stretch"
+                )
+
+            with coluna_anotada:
+                # Mostra a radiografia anotada salva
+                st.image(
+                    imagem_anotada_atual,
+                    caption="Detecções e keypoints do modelo",
+                    width="stretch"
+                )
+
+        st.caption(
+            "Arquivo em sessão: "
+            + st.session_state["dados_radiograficos"]["nome_arquivo"]
         )
 
+        if caminho_modelo.exists():
 
-        st.success(
-            "Radiografia carregada e armazenada com sucesso."
-        )
+            try: #caso ache o caminho onde está, tente carregar o modelo
 
+                modelo_radiografico = carregar_modelo_radiografico( #modelo_radiografico recebe o retorno 'modelo'
+                    str(caminho_modelo) #transforma em string pela compatibilidade, nao se pode usar path
+                )
 
-        st.write(
-            "Arquivo armazenado:",
-            st.session_state["dados_radiograficos"]["nome_arquivo"]
-        )
+                st.caption("Modelo perio-KPT carregado e pronto para análise.")
+
+            except Exception as erro:
+
+                st.error(
+                    "O modelo radiográfico não pôde ser carregado."
+                )
+
+                st.write(
+                    "Erro:",
+                    str(erro)
+                )
 
         #TESTA INFERENCIA COM O MODELO
         if (
@@ -357,7 +381,11 @@ def mostrar_modulo_radiografico():
         and modelo_radiografico is not None
         ):
 
-            if st.button("Analisar radiografia"):
+            if st.button(
+                "Analisar radiografia",
+                type="primary",
+                width="stretch"
+            ):
 
                 try:
 
@@ -404,16 +432,6 @@ def mostrar_modulo_radiografico():
                         imagem_anotada
                     )
 
-
-                    st.success(
-                        "Inferência radiográfica executada com sucesso."
-                    )
-
-
-                    st.write(
-                        "Objetos detectados pelo modelo:",
-                        len(resultado.boxes)
-                    )
 
                     if resultado.keypoints is None:
 
@@ -472,20 +490,6 @@ def mostrar_modulo_radiografico():
                             "Classe desconhecida"
                             )
 
-                            st.write(
-                                f"Objeto {numero_objeto}"
-                            )
-
-                            st.write(
-                                "Classe radicular:",
-                                classe_radicular
-                            )
-
-                            st.write(
-                                "Confiança da detecção:",
-                                f"{confianca_deteccao:.3f}"
-                            )
-
                             if len(keypoints_objeto) != len(NOMES_KEYPOINTS): #verifica se o numero de keypoints do objeto é igual ao numero de nomes de keypoints, se não for, mostra um aviso e continua para o proximo objeto
 
                                 st.warning(
@@ -507,7 +511,6 @@ def mostrar_modulo_radiografico():
                                 if x == 0 and y == 0:
 
                                     pontos_objeto[nome] = None
-                                    st.write(f"{nome}: não detectado")
 
                                 else:
 
@@ -533,27 +536,9 @@ def mostrar_modulo_radiografico():
                                         fill="white"
                                     )
 
-                                    st.write(       #escreve cada ponto com suas informações, no loop for
-                                        f"{nome}: "
-                                        f"x = {x:.1f}, "
-                                        f"y = {y:.1f}, "
-                                        f"confiança = {confianca:.3f}"
-                                    )
-
-
-                            st.write(
-                                "Pontos organizados:",
-                                pontos_objeto
-                            )
-
                             referencias_objeto = REFERENCIAS_RADICULARES.get(
                                 classe_id,
                                 []
-                            )
-
-                            st.write(
-                                "Referências radiculares utilizadas:",
-                                referencias_objeto
                             )
 
                             for nome_referencia in referencias_objeto:
@@ -561,12 +546,6 @@ def mostrar_modulo_radiografico():
                                 ponto_referencia = pontos_objeto[
                                     nome_referencia
                                 ]
-
-                                st.write(
-                                    nome_referencia,
-                                    "→",
-                                    ponto_referencia
-                                )
 
                             eixo_objeto = calcular_eixo_dentario(
                             pontos_objeto,
@@ -582,33 +561,6 @@ def mostrar_modulo_radiografico():
                                 )
 
                                 continue
-
-
-                            st.write(
-                                "Centro cervical:",
-                                eixo_objeto["centro_cervical"]
-                            )
-
-
-                            st.write(
-                                "Referência apical do eixo:",
-                                eixo_objeto["referencia_apical"]
-                            )
-
-
-                            st.write(
-                                "Fonte da referência apical:",
-                                eixo_objeto["fonte_referencia_apical"]
-                            )
-
-
-                            st.write(
-                                "Direção do eixo:",
-                                (
-                                    eixo_objeto["versor_x"],
-                                    eixo_objeto["versor_y"]
-                                )
-                            )
 
 
                             nomes_para_projetar = [
@@ -639,22 +591,6 @@ def mostrar_modulo_radiografico():
                                                                 #um dicionário contendo nome do ponto + disntancia projetada
 
 
-                                if posicao is None:
-
-                                    st.write(
-                                        nome_ponto,
-                                        "→ projeção não disponível"
-                                    )
-
-                                else:
-
-                                    st.write(
-                                        nome_ponto,
-                                        "→ posição no eixo:",
-                                        f"{posicao:.2f}"
-                                    )
-
-
                             #AGORA SIM VAMOS CALCULAR AS DISTANCIAS, DE ACORDO COM SUAS PROJEÇÕES NO EIXO
                             distancia_cej_bl_mesial = calcular_distancia_projetada(
                                 projecoes_objeto["CEJ-m"],
@@ -664,33 +600,6 @@ def mostrar_modulo_radiografico():
                                 projecoes_objeto["CEJ-d"],
                                 projecoes_objeto["BL-d"]
                             )
-
-                            if distancia_cej_bl_mesial is None:
-
-                                st.write(
-                                    "Distância CEJ → BL mesial: não disponível"
-                                )
-
-                            else:
-
-                                st.write(
-                                    "Distância projetada CEJ → BL mesial:",
-                                    f"{distancia_cej_bl_mesial:.2f}"
-                                )
-
-
-                            if distancia_cej_bl_distal is None:
-
-                                st.write(
-                                    "Distância CEJ → BL distal: não disponível"
-                                )
-
-                            else:
-
-                                st.write(
-                                    "Distância projetada CEJ → BL distal:",
-                                    f"{distancia_cej_bl_distal:.2f}"
-                                )
 
                             # ESCOLHE A REFERÊNCIA RADICULAR DE CADA SUPERFÍCIE
 
@@ -746,27 +655,6 @@ def mostrar_modulo_radiografico():
                             )
 
 
-                            st.write(
-                                "Referência radicular mesial:",
-                                referencia_mesial
-                            )
-
-                            st.write(
-                                "Distância projetada CEJ → referência mesial:",
-                                distancia_cej_rl_mesial
-                            )
-
-
-                            st.write(
-                                "Referência radicular distal:",
-                                referencia_distal
-                            )
-
-                            st.write(
-                                "Distância projetada CEJ → referência distal:",
-                                distancia_cej_rl_distal
-                            )
-
                             # -------------------------
                             # CÁLCULO DO %PBL
                             # -------------------------
@@ -782,33 +670,6 @@ def mostrar_modulo_radiografico():
                                 distancia_cej_rl_distal
                             )
 
-
-                            if pbl_mesial is None:
-
-                                st.write(
-                                    "%PBL mesial: não disponível"
-                                )
-
-                            else:
-
-                                st.write(
-                                    "%PBL mesial:",
-                                    f"{pbl_mesial:.2f}%"
-                                )
-
-
-                            if pbl_distal is None:
-
-                                st.write(
-                                    "%PBL distal: não disponível"
-                                )
-
-                            else:
-
-                                st.write(
-                                    "%PBL distal:",
-                                    f"{pbl_distal:.2f}%"
-                                )
 
                             resultado_dente = {
                                 "numero_objeto": numero_objeto,
@@ -838,13 +699,6 @@ def mostrar_modulo_radiografico():
                         st.session_state["dados_radiograficos"][ #Fora do for, ou seja, primeiro acaba todos os dentes e depois salva no session_state
                             "resultados_dentes"
                         ] = resultados_dentes_analise
-
-                        st.write(
-                            "Resultados dos dentes:", #mostra o resultado da lista dos dados adquiridos no modulo radiografico
-                            st.session_state[         #cada item da lista contem um dicionario com resultado_dente 
-                                "dados_radiograficos"
-                            ]["resultados_dentes"]
-                        )
 
                         # -------------------------
                         # PROCURA O MAIOR %PBL DA RADIOGRAFIA
@@ -966,29 +820,7 @@ def mostrar_modulo_radiografico():
                                 "periodontal"
                             ] = None
 
-                            st.success(
-                                "Resultado radiográfico armazenado com sucesso."
-                            )
-
-
-                            st.write(
-                                "Maior %PBL:",
-                                f"{pbl_maximo_analise:.2f}%"
-                            )
-
-                            st.write(
-                                "Objeto determinante:",
-                                dente_determinante_analise
-                            )
-
-                            st.write(
-                                "Superfície determinante:",
-                                superficie_determinante_analise
-                            )
-
-
-
-                            st.divider()
+                            st.rerun()
 
                 except Exception as erro:
 
@@ -1017,97 +849,53 @@ def mostrar_modulo_radiografico():
         )
 
 
-        # Mostra a radiografia anotada salva
-        if imagem_anotada_bytes is not None:
-
-            st.subheader(
-                "Radiografia com detecções"
-            )
-
-            st.image(
-                imagem_anotada_bytes,
-                caption="Caixas e keypoints detectados pelo modelo"
-            )
-
-
         # -------------------------
         # RESUMO DOS DENTES ANALISADOS
         # -------------------------
 
         if len(resultados_salvos) > 0:
-
-            st.subheader(
-                "Resultados por dente"
+            st.markdown("### 3. Resultados por dente")
+            st.caption(
+                "A numeração representa a ordem visual dos objetos detectados "
+                "e não corresponde à numeração odontológica FDI."
             )
 
+            linhas_resultados = []
 
             for resultado_dente in resultados_salvos:
+                pbl_mesial = resultado_dente["pbl_mesial"]
+                pbl_distal = resultado_dente["pbl_distal"]
 
-                numero_objeto = resultado_dente[
-                    "numero_objeto"
-                ]
-
-                classe_radicular = resultado_dente[
-                    "classe_radicular"
-                ]
-
-                confianca_deteccao = resultado_dente[
-                    "confianca_deteccao"
-                ]
-
-                pbl_mesial = resultado_dente[
-                    "pbl_mesial"
-                ]
-
-                pbl_distal = resultado_dente[
-                    "pbl_distal"
-                ]
-
-
-                st.markdown(
-                    f"### Objeto {numero_objeto}"
+                linhas_resultados.append(
+                    {
+                        "Objeto": resultado_dente["numero_objeto"],
+                        "Classe radicular": resultado_dente["classe_radicular"],
+                        "Confiança": (
+                            f"{resultado_dente['confianca_deteccao']:.3f}"
+                        ),
+                        "%PBL mesial": (
+                            f"{pbl_mesial:.2f}%"
+                            if pbl_mesial is not None
+                            else "Não disponível"
+                        ),
+                        "%PBL distal": (
+                            f"{pbl_distal:.2f}%"
+                            if pbl_distal is not None
+                            else "Não disponível"
+                        ),
+                        "Situação": (
+                            "Ignorado"
+                            if resultado_dente["ignorado"]
+                            else "Considerado"
+                        )
+                    }
                 )
 
-                st.write(
-                    "Classe radicular:",
-                    classe_radicular
-                )
-
-                st.write(
-                    "Confiança da detecção:",
-                    f"{confianca_deteccao:.3f}"
-                )
-
-
-                if pbl_mesial is None:
-
-                    st.write(
-                        "%PBL mesial: não disponível"
-                    )
-
-                else:
-
-                    st.write(
-                        "%PBL mesial:",
-                        f"{pbl_mesial:.2f}%"
-                    )
-
-
-                if pbl_distal is None:
-
-                    st.write(
-                        "%PBL distal: não disponível"
-                    )
-
-                else:
-
-                    st.write(
-                        "%PBL distal:",
-                        f"{pbl_distal:.2f}%"
-                    )
-
-
-                st.divider()
+            st.dataframe(
+                linhas_resultados,
+                hide_index=True,
+                width="stretch"
+            )
 
 
 
@@ -1124,9 +912,7 @@ def mostrar_modulo_radiografico():
 
         if len(resultados_salvos) > 0:
 
-            st.subheader(
-                "Revisão das detecções"
-            )
+            st.markdown("### 4. Revisão das detecções")
 
             st.write(
                 "Se algum objeto detectado estiver visualmente "
@@ -1156,7 +942,8 @@ def mostrar_modulo_radiografico():
 
 
                 if st.button(
-                    "Ignorar objeto selecionado"
+                    "Ignorar objeto selecionado",
+                    width="stretch"
                 ):
 
                     if objeto_para_ignorar is None:
@@ -1178,11 +965,6 @@ def mostrar_modulo_radiografico():
                                     "ignorado"
                                 ] = True
 
-
-                        st.success(
-                            f"Objeto {objeto_para_ignorar} "
-                            "ignorado na análise."
-                        )
 
                         # -------------------------
                         # RECALCULA O MAIOR %PBL
@@ -1277,29 +1059,7 @@ def mostrar_modulo_radiografico():
                             "periodontal"
                         ] = None
 
-                        if pbl_maximo_novo is None:
-
-                            st.warning(
-                                "Nenhum %PBL válido permaneceu "
-                                "após ignorar o objeto."
-                            )
-
-                        else:
-
-                            st.write(
-                                "Novo maior %PBL:",
-                                f"{pbl_maximo_novo:.2f}%"
-                            )
-
-                            st.write(
-                                "Novo objeto determinante:",
-                                dente_determinante_novo
-                            )
-
-                            st.write(
-                                "Nova superfície determinante:",
-                                superficie_determinante_nova
-                            )
+                        st.rerun()
 
              # -------------------------
             # OBJETOS IGNORADOS
@@ -1348,11 +1108,6 @@ def mostrar_modulo_radiografico():
             )
 
 
-            st.subheader(
-                "Resultado radiográfico final"
-            )
-
-
             if pbl_atual is None:
 
                 st.warning(
@@ -1360,19 +1115,48 @@ def mostrar_modulo_radiografico():
                 )
 
             else:
-
-                st.write(
-                    "Maior %PBL considerado:",
-                    f"{pbl_atual:.2f}%"
+                st.markdown(
+                    f"""
+                    <section class="perio-result">
+                        <div class="perio-result__eyebrow">
+                            Resultado radiográfico final
+                        </div>
+                        <div class="perio-result__title">
+                            Maior perda óssea radiográfica considerada
+                        </div>
+                        <div class="perio-result__grid">
+                            <div class="perio-result-card">
+                                <div class="perio-result-card__label">
+                                    Maior %PBL
+                                </div>
+                                <div class="perio-result-card__value">
+                                    {pbl_atual:.2f}%
+                                </div>
+                            </div>
+                            <div class="perio-result-card">
+                                <div class="perio-result-card__label">
+                                    Objeto determinante
+                                </div>
+                                <div class="perio-result-card__value">
+                                    {dente_atual}
+                                </div>
+                            </div>
+                            <div class="perio-result-card">
+                                <div class="perio-result-card__label">
+                                    Superfície determinante
+                                </div>
+                                <div class="perio-result-card__value">
+                                    {superficie_atual}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    """,
+                    unsafe_allow_html=True
                 )
 
-                st.write(
-                    "Objeto determinante:",
-                    dente_atual
-                )
-
-                st.write(
-                    "Superfície determinante:",
-                    superficie_atual
+                st.success(
+                    f"%PBL de {pbl_atual:.2f}% disponível no módulo "
+                    "periodontal."
                 )
 

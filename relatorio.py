@@ -6,6 +6,15 @@ from datetime import datetime
 def mostrar_relatorio():
     st.header("Relatório integrado")
 
+    def texto_valor(valor, unidade=""):
+        if valor is None:
+            return "Não informado"
+
+        if unidade:
+            return f"{valor} {unidade}"
+
+        return str(valor)
+
 
     # Pegamos os dados principais já armazenados
     dados_caso = st.session_state["dados_caso"]
@@ -22,644 +31,418 @@ def mostrar_relatorio():
 
     pbl = st.session_state["avaliacao"]["pbl"]
 
-    st.subheader("Identificação do caso")
+    dados_findrisc = st.session_state["dados_findrisc"]
+    dados_interheart = st.session_state["dados_interheart"]
+    dados_periodontais = st.session_state["dados_periodontais"]
 
-    st.write(
-        "Código:",
-        dados_caso["codigo"]
-    )
+    dente_determinante = dados_radiograficos["dente_determinante"]
+    superficie_determinante = dados_radiograficos["superficie_determinante"]
 
-    st.write(
-        "Idade:",
-        dados_caso["idade"]
-    )
-
-    st.write(
-        "Sexo:",
-        dados_caso["sexo"]
-    )
-
-
-    st.subheader("Resumo dos resultados")
-
-    # CLASSIFICAÇÃO PERIODONTAL
-
-    if (
+    periodontal_concluido = (
         resultado_periodontal is not None
         and "classificacao_final" in resultado_periodontal
-    ):
+    )
+    findrisc_nao_aplicavel = dados_clinicos["diabetes"] == "Sim"
 
-        st.write(
-            "Classificação periodontal:",
-            resultado_periodontal["classificacao_final"]
-        )
+    avaliacoes_concluidas = 0
 
-    else:
+    if periodontal_concluido:
+        avaliacoes_concluidas += 1
 
-        st.write(
-            "Classificação periodontal: ainda não concluída."
-        )
-
-
-    # ANÁLISE RADIOGRÁFICA
-
-    if pbl is not None:
-
-        st.write(
-            "Perda óssea radiográfica (%PBL):",
-            f"{pbl:.2f}%"
-        )
-
-    else:
-
-        st.write(
-            "Perda óssea radiográfica (%PBL): ainda não calculada."
-        )
-
-
-    # FINDRISC
-
-    if resultado_findrisc is not None:
-
-        st.write(
-            "FINDRISC:",
-            resultado_findrisc["pontos"],
-            "pontos —",
-            resultado_findrisc["classificacao"]
-        )
-
-    elif dados_clinicos["diabetes"] == "Sim":
-
-        st.write(
-            "FINDRISC: não aplicável — diabetes já diagnosticado."
-        )
-
-    else:
-
-        st.write(
-            "FINDRISC: ainda não calculado."
-        )
-
-
-    # INTERHEART
+    if resultado_findrisc is not None or findrisc_nao_aplicavel:
+        avaliacoes_concluidas += 1
 
     if resultado_interheart is not None:
+        avaliacoes_concluidas += 1
 
-        st.write(
-            "INTERHEART:",
-            resultado_interheart["pontos"],
-            "pontos —",
-            resultado_interheart["classificacao"]
-        )
+    codigo_relatorio = escape(str(dados_caso["codigo"] or "Caso não definido"))
+    idade_relatorio = (
+        f"{dados_caso['idade']} anos"
+        if dados_caso["idade"] is not None
+        else "Idade não informada"
+    )
+    sexo_relatorio = dados_caso["sexo"] or "Sexo não informado"
+
+    st.markdown(
+        f"""
+        <section class="perio-report-header">
+            <div>
+                <div class="perio-report-header__label">
+                    Relatório de avaliação integrada
+                </div>
+                <div class="perio-report-header__title">{codigo_relatorio}</div>
+                <div class="perio-report-header__meta">
+                    <span>{escape(idade_relatorio)}</span>
+                    <span>{escape(sexo_relatorio)}</span>
+                </div>
+            </div>
+            <div class="perio-report-header__count">
+                {avaliacoes_concluidas}/3
+                <span>avaliações concluídas</span>
+            </div>
+        </section>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.subheader("Resumo principal")
+
+    # CLASSIFICAÇÃO PERIODONTAL
+    if periodontal_concluido:
+        estado_periodontal = "Concluído"
+        valor_periodontal = resultado_periodontal["classificacao_final"]
+        classe_periodontal = "perio-status is-complete"
 
     else:
+        estado_periodontal = "Pendente"
+        valor_periodontal = "Classificação ainda não concluída."
+        classe_periodontal = "perio-status"
 
-        st.write(
-            "INTERHEART: ainda não calculado."
+    # ANÁLISE RADIOGRÁFICA
+    if pbl is not None:
+        estado_pbl = "Disponível"
+        valor_pbl = f"{pbl:.2f}%"
+        classe_pbl = "perio-status is-complete"
+
+    else:
+        estado_pbl = "Pendente"
+        valor_pbl = "%PBL ainda não calculado."
+        classe_pbl = "perio-status"
+
+    # FINDRISC
+    if resultado_findrisc is not None:
+        estado_findrisc = "Concluído"
+        valor_findrisc = (
+            f"{resultado_findrisc['pontos']} pontos · "
+            f"{resultado_findrisc['classificacao']}"
         )
+        classe_findrisc = "perio-status is-complete"
 
+    elif findrisc_nao_aplicavel:
+        estado_findrisc = "Não aplicável"
+        valor_findrisc = "Diabetes já diagnosticado."
+        classe_findrisc = "perio-status is-na"
 
-    
+    else:
+        estado_findrisc = "Pendente"
+        valor_findrisc = "Resultado ainda não calculado."
+        classe_findrisc = "perio-status"
+
+    # INTERHEART
+    if resultado_interheart is not None:
+        estado_interheart = "Concluído"
+        valor_interheart = (
+            f"{resultado_interheart['pontos']} pontos · "
+            f"{resultado_interheart['classificacao']}"
+        )
+        classe_interheart = "perio-status is-complete"
+
+    else:
+        estado_interheart = "Pendente"
+        valor_interheart = "Resultado ainda não calculado."
+        classe_interheart = "perio-status"
+
+    colunas_resumo = st.columns(4)
+    itens_resumo = [
+        (
+            classe_periodontal,
+            estado_periodontal,
+            "Periodontal",
+            valor_periodontal
+        ),
+        (classe_pbl, estado_pbl, "%PBL", valor_pbl),
+        (classe_findrisc, estado_findrisc, "FINDRISC", valor_findrisc),
+        (
+            classe_interheart,
+            estado_interheart,
+            "INTERHEART",
+            valor_interheart
+        )
+    ]
+
+    for coluna, item in zip(colunas_resumo, itens_resumo):
+        classe, estado, titulo, valor = item
+
+        with coluna:
+            st.markdown(
+                f"""
+                <div class="{classe}">
+                    <div class="perio-status__state">{escape(estado)}</div>
+                    <div class="perio-status__title">{escape(titulo)}</div>
+                    <div class="perio-status__value">
+                        {escape(str(valor))}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
     # DETALHAMENTO DOS RESULTADOS
 
     # -------------------------
     # DETALHAMENTO PERIODONTAL
     # -------------------------
+    with st.expander("Detalhamento periodontal", expanded=periodontal_concluido):
+        if periodontal_concluido:
+            coluna_estagio, coluna_extensao, coluna_grau = st.columns(3)
 
-    st.subheader("Detalhamento periodontal")
+            with coluna_estagio:
+                st.metric("Estágio", resultado_periodontal["estagio"])
 
+            with coluna_extensao:
+                st.metric(
+                    "Extensão / distribuição",
+                    resultado_periodontal["extensao_distribuicao"]
+                )
 
-    if (
-        resultado_periodontal is not None
-        and "classificacao_final" in resultado_periodontal
-    ):
+            with coluna_grau:
+                st.metric("Grau", resultado_periodontal["grau"])
 
-        st.write(
-            "Estágio:",
-            resultado_periodontal["estagio"]
-        )
+            # Informa se a classificação é definitiva ou provisória
+            if resultado_periodontal.get("classificacao_provisoria", False):
+                st.warning("Classificação provisória.")
 
-        st.write(
-            "Extensão/distribuição:",
-            resultado_periodontal["extensao_distribuicao"]
-        )
+            else:
+                st.success("Classificação definitiva.")
 
-        st.write(
-            "Grau:",
-            resultado_periodontal["grau"]
-        )
-
-
-        # Informa se a classificação é definitiva ou provisória
-        if resultado_periodontal.get(
-            "classificacao_provisoria",
-            False
-        ):
-
-            st.warning(
-                "Classificação provisória."
+            # Critério que determinou a severidade
+            st.write(
+                "**Critério de severidade:**",
+                resultado_periodontal["criterio_severidade"]
             )
+
+            # Fatores de complexidade
+            fatores = resultado_periodontal["fatores_complexidade"]
+            st.markdown("**Fatores de complexidade identificados**")
+
+            if len(fatores) > 0:
+                for fator in fatores:
+                    st.write("-", fator)
+
+            else:
+                st.write("Nenhum.")
+
+            # Critério utilizado para definir o grau-base
+            st.write(
+                "**Critério utilizado para o grau-base:**",
+                resultado_periodontal["criterio_grau_base"]
+            )
+
+            # Relação %PBL / idade
+            if resultado_periodontal["razao_pbl_idade"] is not None:
+                st.write(
+                    "**Relação %PBL / idade:**",
+                    resultado_periodontal["razao_pbl_idade"]
+                )
+
+            # Modificadores do grau
+            modificadores = resultado_periodontal["modificadores_grau"]
+            st.markdown("**Modificadores do grau identificados**")
+
+            if len(modificadores) > 0:
+                for modificador in modificadores:
+                    st.write("-", modificador)
+
+            else:
+                st.write("Nenhum.")
+
+            # Se a classificação for provisória,
+            # mostramos quais informações estavam ausentes
+            if resultado_periodontal.get("classificacao_provisoria", False):
+                dados_ausentes_estagio = resultado_periodontal.get(
+                    "dados_ausentes_estagio",
+                    []
+                )
+                dados_ausentes_grau = resultado_periodontal.get(
+                    "dados_ausentes_grau",
+                    []
+                )
+
+                if len(dados_ausentes_estagio) > 0:
+                    st.markdown("**Dados ausentes relacionados ao estágio**")
+
+                    for dado in dados_ausentes_estagio:
+                        st.write("-", dado)
+
+                if len(dados_ausentes_grau) > 0:
+                    st.markdown("**Dados ausentes relacionados ao grau**")
+
+                    for dado in dados_ausentes_grau:
+                        st.write("-", dado)
 
         else:
-
-            st.success(
-                "Classificação definitiva."
-            )
-
-
-        # Critério que determinou a severidade
-        st.write(
-            "Critério de severidade:",
-            resultado_periodontal["criterio_severidade"]
-        )
-
-
-        # Fatores de complexidade
-        fatores = resultado_periodontal[
-            "fatores_complexidade"
-        ]
-
-        if len(fatores) > 0:
-
-            st.write(
-                "Fatores de complexidade identificados:"
-            )
-
-            for fator in fatores:
-
-                st.write(
-                    "-",
-                    fator
-                )
-
-        else:
-
-            st.write(
-                "Fatores de complexidade identificados: nenhum."
-            )
-
-
-        # Critério utilizado para definir o grau-base
-        st.write(
-            "Critério utilizado para o grau-base:",
-            resultado_periodontal["criterio_grau_base"]
-        )
-
-
-        # Relação %PBL / idade
-        if resultado_periodontal["razao_pbl_idade"] is not None:
-
-            st.write(
-                "Relação %PBL / idade:",
-                resultado_periodontal["razao_pbl_idade"]
-            )
-
-
-        # Modificadores do grau
-        modificadores = resultado_periodontal[
-            "modificadores_grau"
-        ]
-
-        if len(modificadores) > 0:
-
-            st.write(
-                "Modificadores do grau identificados:"
-            )
-
-            for modificador in modificadores:
-
-                st.write(
-                    "-",
-                    modificador
-                )
-
-        else:
-
-            st.write(
-                "Modificadores do grau identificados: nenhum."
-            )
-
-
-        # Se a classificação for provisória,
-        # mostramos quais informações estavam ausentes
-        if resultado_periodontal.get(
-            "classificacao_provisoria",
-            False
-        ):
-
-            dados_ausentes_estagio = resultado_periodontal.get(
-                "dados_ausentes_estagio",
-                []
-            )
-
-            dados_ausentes_grau = resultado_periodontal.get(
-                "dados_ausentes_grau",
-                []
-            )
-
-
-            if len(dados_ausentes_estagio) > 0:
-
-                st.write(
-                    "Dados ausentes relacionados ao estágio:"
-                )
-
-                for dado in dados_ausentes_estagio:
-
-                    st.write(
-                        "-",
-                        dado
-                    )
-
-
-            if len(dados_ausentes_grau) > 0:
-
-                st.write(
-                    "Dados ausentes relacionados ao grau:"
-                )
-
-                for dado in dados_ausentes_grau:
-
-                    st.write(
-                        "-",
-                        dado
-                    )
-
-    else:
-
-        st.write(
-            "Ainda não existem resultados periodontais completos."
-        )
+            st.info("Ainda não existem resultados periodontais completos.")
 
     # -------------------------
     # DETALHAMENTO RADIOGRÁFICO
     # -------------------------
+    with st.expander("Detalhamento radiográfico"):
+        if pbl is not None:
+            coluna_pbl, coluna_dente, coluna_superficie = st.columns(3)
 
-    st.subheader("Detalhamento radiográfico")
+            with coluna_pbl:
+                st.metric("%PBL máximo", f"{pbl:.2f}%")
 
+            with coluna_dente:
+                st.metric("Objeto/dente determinante", dente_determinante)
 
-    dente_determinante = dados_radiograficos[
-        "dente_determinante"
-    ]
+            with coluna_superficie:
+                st.metric("Superfície determinante", superficie_determinante)
 
-    superficie_determinante = dados_radiograficos[
-        "superficie_determinante"
-    ]
+        else:
+            st.info("Análise radiográfica ainda não concluída.")
 
+    with st.expander("Detalhamento dos escores de risco"):
+        coluna_findrisc, coluna_interheart = st.columns(2)
 
-    if pbl is not None:
+        # FINDRISC
+        with coluna_findrisc:
+            st.markdown("#### FINDRISC")
 
-        st.write(
-            "Perda óssea radiográfica máxima (%PBL):",
-            f"{pbl:.2f}%"
-        )
+            if resultado_findrisc is not None:
+                st.metric("Pontuação", resultado_findrisc["pontos"])
+                st.write(
+                    "**Classificação:**",
+                    resultado_findrisc["classificacao"]
+                )
+                st.write(
+                    "**Risco estimado em 10 anos:**",
+                    resultado_findrisc["estimativa"]
+                )
 
-        st.write(
-            "Objeto/dente determinante:",
-            dente_determinante
-        )
+            elif findrisc_nao_aplicavel:
+                st.info(
+                    "FINDRISC não aplicável — diabetes já diagnosticado."
+                )
 
-        st.write(
-            "Superfície determinante:",
-            superficie_determinante
-        )
+            else:
+                st.info("FINDRISC ainda não calculado.")
 
-    else:
+        # INTERHEART
+        with coluna_interheart:
+            st.markdown("#### INTERHEART")
 
-        st.write(
-            "Análise radiográfica ainda não concluída."
-        )
+            if resultado_interheart is not None:
+                st.metric("Pontuação", resultado_interheart["pontos"])
+                st.write(
+                    "**Classificação:**",
+                    resultado_interheart["classificacao"]
+                )
+                st.write(
+                    "**Relação cintura-quadril:**",
+                    resultado_interheart["rcq"]
+                )
 
-
-    # FINDRISC
-
-    st.subheader("Detalhamento FINDRISC")
-
-
-    if resultado_findrisc is not None:
-
-        st.write(
-            "Pontuação:",
-            resultado_findrisc["pontos"]
-        )
-
-        st.write(
-            "Classificação:",
-            resultado_findrisc["classificacao"]
-        )
-
-        st.write(
-            "Risco estimado em 10 anos:",
-            resultado_findrisc["estimativa"]
-        )
-
-
-    elif dados_clinicos["diabetes"] == "Sim":
-
-        st.write(
-            "FINDRISC não aplicável, pois foi informado "
-            "diabetes já diagnosticado."
-        )
-
-
-    else:
-
-        st.write(
-            "FINDRISC ainda não calculado."
-        )
-
-
-    # INTERHEART
-
-    st.subheader("Detalhamento INTERHEART")
-
-
-    if resultado_interheart is not None:
-
-        st.write(
-            "Pontuação:",
-            resultado_interheart["pontos"]
-        )
-
-        st.write(
-            "Classificação:",
-            resultado_interheart["classificacao"]
-        )
-
-        st.write(
-            "Relação cintura-quadril:",
-            resultado_interheart["rcq"]
-        )
-
-    else:
-
-        st.write(
-            "INTERHEART ainda não calculado."
-        )
-
+            else:
+                st.info("INTERHEART ainda não calculado.")
 
     # DADOS UTILIZADOS NO RELATÓRIO
-
-    st.subheader("Dados utilizados")
-
-
-    dados_clinicos = st.session_state["dados_clinicos"]
-
+    st.subheader("Dados utilizados e rastreabilidade")
 
     with st.expander("Ver dados clínicos compartilhados"):
+        coluna_um, coluna_dois = st.columns(2)
 
-        st.write(
-            "Peso:",
-            dados_clinicos["peso"],
-            "kg"
-        )
+        with coluna_um:
+            st.write("**Peso:**", texto_valor(dados_clinicos["peso"], "kg"))
+            st.write("**Altura:**", texto_valor(dados_clinicos["altura"], "m"))
+            st.write("**IMC:**", texto_valor(dados_clinicos["imc"], "kg/m²"))
+            st.write("**Diabetes:**", texto_valor(dados_clinicos["diabetes"]))
 
-        st.write(
-            "Altura:",
-            dados_clinicos["altura"],
-            "m"
-        )
+        with coluna_dois:
+            st.write("**Cintura:**", texto_valor(dados_clinicos["cintura"], "cm"))
+            st.write("**Quadril:**", texto_valor(dados_clinicos["quadril"], "cm"))
+            st.write("**Tabagismo:**", texto_valor(dados_clinicos["tabagismo"]))
 
-        st.write(
-            "IMC:",
-            dados_clinicos["imc"],
-            "kg/m²"
-        )
+            # Cigarros por dia só é relevante para fumantes
+            if dados_clinicos["tabagismo"] in [
+                "Fumante atual",
+                "Ex-fumante há 12 meses ou menos"
+            ]:
+                st.write(
+                    "**Média de cigarros por dia:**",
+                    texto_valor(dados_clinicos["cigarros_dia"])
+                )
 
-        st.write(
-            "Circunferência da cintura:",
-            dados_clinicos["cintura"],
-            "cm"
-        )
-
-        st.write(
-            "Circunferência do quadril:",
-            dados_clinicos["quadril"],
-            "cm"
-        )
-
-        st.write(
-            "Diabetes:",
-            dados_clinicos["diabetes"]
-        )
-
-        st.write(
-            "Tabagismo:",
-            dados_clinicos["tabagismo"]
-        )
-
-
-        # Cigarros por dia só é relevante para fumantes
-        if (
-            dados_clinicos["tabagismo"]
-            == "Fumante atual ou nos últimos 12 meses"
-        ):
-
-            st.write(
-                "Média de cigarros por dia:",
-                dados_clinicos["cigarros_dia"]
-            )
-    
     # DADOS ESPECÍFICOS DOS MÓDULOS
 
-
     # FINDRISC
-
-    dados_findrisc = st.session_state["dados_findrisc"]
-
-
     with st.expander("Ver dados utilizados no FINDRISC"):
-
         st.write(
-            "Atividade física:",
-            dados_findrisc["atividade_fisica"]
+            "**Atividade física:**",
+            texto_valor(dados_findrisc["atividade_fisica"])
         )
-
         st.write(
-            "Consumo diário de frutas ou vegetais:",
-            dados_findrisc["frutas_vegetais"]
+            "**Consumo diário de frutas ou vegetais:**",
+            texto_valor(dados_findrisc["frutas_vegetais"])
         )
-
         st.write(
-            "Uso de medicamento para pressão alta:",
-            dados_findrisc["medicacao_pressao"]
+            "**Uso de medicamento para pressão alta:**",
+            texto_valor(dados_findrisc["medicacao_pressao"])
         )
-
         st.write(
-            "Histórico de glicemia elevada:",
-            dados_findrisc["glicemia_elevada"]
+            "**Histórico de glicemia elevada:**",
+            texto_valor(dados_findrisc["glicemia_elevada"])
         )
-
         st.write(
-            "Histórico familiar de diabetes:",
-            dados_findrisc["historico_familiar"]
+            "**Histórico familiar de diabetes:**",
+            texto_valor(dados_findrisc["historico_familiar"])
         )
-
 
     # INTERHEART
-
-    dados_interheart = st.session_state["dados_interheart"]
-
-
     with st.expander("Ver dados utilizados no INTERHEART"):
+        campos_interheart = [
+            ("Hipertensão", "hipertensao"),
+            ("Histórico parental de infarto", "historico_parental_infarto"),
+            ("Estresse", "estresse"),
+            ("Exposição ao fumo passivo", "fumo_passivo"),
+            ("Atividade física no lazer", "atividade_lazer"),
+            ("Tristeza ou depressão", "tristeza_depressao"),
+            ("Consumo de alimentos salgados", "alimento_salgado"),
+            ("Consumo de fritura ou fast-food", "fritura_fast_food"),
+            ("Consumo diário de frutas", "fruta_diaria"),
+            ("Consumo diário de vegetais", "vegetais_diarios"),
+            ("Consumo de carne ou aves", "carne_aves")
+        ]
 
-        st.write(
-            "Hipertensão:",
-            dados_interheart["hipertensao"]
-        )
-
-        st.write(
-            "Histórico parental de infarto:",
-            dados_interheart["historico_parental_infarto"]
-        )
-
-        st.write(
-            "Estresse:",
-            dados_interheart["estresse"]
-        )
-
-        st.write(
-            "Exposição ao fumo passivo:",
-            dados_interheart["fumo_passivo"]
-        )
-
-        st.write(
-            "Atividade física no lazer:",
-            dados_interheart["atividade_lazer"]
-        )
-
-        st.write(
-            "Tristeza ou depressão:",
-            dados_interheart["tristeza_depressao"]
-        )
-
-        st.write(
-            "Consumo de alimentos salgados:",
-            dados_interheart["alimento_salgado"]
-        )
-
-        st.write(
-            "Consumo de fritura ou fast-food:",
-            dados_interheart["fritura_fast_food"]
-        )
-
-        st.write(
-            "Consumo diário de frutas:",
-            dados_interheart["fruta_diaria"]
-        )
-
-        st.write(
-            "Consumo diário de vegetais:",
-            dados_interheart["vegetais_diarios"]
-        )
-
-        st.write(
-            "Consumo de carne ou aves:",
-            dados_interheart["carne_aves"]
-        )
-
+        for rotulo, chave in campos_interheart:
+            st.write(
+                f"**{rotulo}:**",
+                texto_valor(dados_interheart[chave])
+            )
 
     # CLASSIFICAÇÃO PERIODONTAL
+    with st.expander("Ver dados utilizados na classificação periodontal"):
+        campos_periodontais = [
+            ("CAL interproximal máximo", "cal", "mm"),
+            ("Dentes perdidos por periodontite", "dentes_perdidos", ""),
+            ("Profundidade máxima de sondagem", "sondagem", "mm"),
+            ("Perda óssea vertical máxima", "perda_vertical", "mm"),
+            ("Furca", "furca", ""),
+            ("Defeito do rebordo", "defeito_rebordo", ""),
+            ("Disfunção mastigatória", "disfuncao_mastigatoria", ""),
+            ("Mobilidade dentária", "mobilidade", ""),
+            ("Dentes remanescentes", "dentes_remanescentes", ""),
+            ("Colapso de mordida", "colapso_mordida", ""),
+            ("Migração dentária", "migracao_dentaria", ""),
+            ("Abertura em leque", "abertura_leque", ""),
+            (
+                "Percentual de dentes envolvidos",
+                "percentual_dentes_envolvidos",
+                "%"
+            ),
+            ("Padrão molar/incisivo", "padrao_molar_incisivo", ""),
+            ("Progressão periodontal em 5 anos", "progressao_5_anos", "mm"),
+            ("Fenótipo clínico", "fenotipo", "")
+        ]
 
-    dados_periodontais = st.session_state["dados_periodontais"]
-
-
-    with st.expander(
-        "Ver dados utilizados na classificação periodontal"
-    ):
-
-        st.write(
-            "CAL interproximal máximo:",
-            dados_periodontais["cal"],
-            "mm"
-        )
-
-        st.write(
-            "Dentes perdidos por periodontite:",
-            dados_periodontais["dentes_perdidos"]
-        )
-
-        st.write(
-            "Profundidade máxima de sondagem:",
-            dados_periodontais["sondagem"],
-            "mm"
-        )
-
-        st.write(
-            "Perda óssea vertical máxima:",
-            dados_periodontais["perda_vertical"],
-            "mm"
-        )
-
-        st.write(
-            "Furca:",
-            dados_periodontais["furca"]
-        )
-
-        st.write(
-            "Defeito do rebordo:",
-            dados_periodontais["defeito_rebordo"]
-        )
-
-        st.write(
-            "Disfunção mastigatória:",
-            dados_periodontais["disfuncao_mastigatoria"]
-        )
-
-        st.write(
-            "Mobilidade dentária:",
-            dados_periodontais["mobilidade"]
-        )
-
-        st.write(
-            "Dentes remanescentes:",
-            dados_periodontais["dentes_remanescentes"]
-        )
-
-        st.write(
-            "Colapso de mordida:",
-            dados_periodontais["colapso_mordida"]
-        )
-
-        st.write(
-            "Migração dentária:",
-            dados_periodontais["migracao_dentaria"]
-        )
-
-        st.write(
-            "Abertura em leque:",
-            dados_periodontais["abertura_leque"]
-        )
-
-        st.write(
-            "Percentual de dentes envolvidos:",
-            dados_periodontais["percentual_dentes_envolvidos"],
-            "%"
-        )
-
-        st.write(
-            "Padrão molar/incisivo:",
-            dados_periodontais["padrao_molar_incisivo"]
-        )
-
-        st.write(
-            "Progressão periodontal em 5 anos:",
-            dados_periodontais["progressao_5_anos"],
-            "mm"
-        )
-
-        st.write(
-            "Fenótipo clínico:",
-            dados_periodontais["fenotipo"]
-        )
-
+        for rotulo, chave, unidade in campos_periodontais:
+            valor = dados_periodontais[chave]
+            st.write(f"**{rotulo}:**", texto_valor(valor, unidade))
 
         if dados_periodontais["hba1c"] is not None:
-
             st.write(
-                "HbA1c:",
-                dados_periodontais["hba1c"],
-                "%"
+                "**HbA1c:**",
+                texto_valor(dados_periodontais["hba1c"], "%")
             )
 
     # SITUAÇÃO DA AVALIAÇÃO
@@ -695,7 +478,7 @@ def mostrar_relatorio():
 
     # FINDRISC
 
-    if resultado_findrisc is None:
+    if resultado_findrisc is None and not findrisc_nao_aplicavel:
 
         pendencias.append(
             "FINDRISC ainda não calculado."
@@ -821,6 +604,17 @@ def mostrar_relatorio():
 
             modificadores_texto = "Nenhum"
 
+        if resultado_findrisc is not None:
+            resumo_findrisc_relatorio = (
+                f"{resultado_findrisc['pontos']} pontos - "
+                f"{resultado_findrisc['classificacao']}"
+            )
+
+        else:
+            resumo_findrisc_relatorio = (
+                "Não aplicável — diabetes já diagnosticado"
+            )
+
         # Começamos pela identificação do caso
         texto_relatorio = (
             "RELATÓRIO INTEGRADO\n"
@@ -838,8 +632,7 @@ def mostrar_relatorio():
             "RESUMO DOS RESULTADOS\n"
             f"Classificação periodontal: "
             f"{resultado_periodontal['classificacao_final']}\n"
-            f"FINDRISC: {resultado_findrisc['pontos']} pontos - "
-            f"{resultado_findrisc['classificacao']}\n"
+            f"FINDRISC: {resumo_findrisc_relatorio}\n"
             f"INTERHEART: {resultado_interheart['pontos']} pontos - "
             f"{resultado_interheart['classificacao']}\n"
             f"%PBL: {pbl}%\n"
@@ -879,14 +672,22 @@ def mostrar_relatorio():
 
 
         # FINDRISC
-        texto_relatorio += (
-            "\n"
-            "FINDRISC\n"
-            f"Pontuação: {resultado_findrisc['pontos']}\n"
-            f"Classificação: {resultado_findrisc['classificacao']}\n"
-            f"Estimativa em 10 anos: "
-            f"{resultado_findrisc['estimativa']}\n"
-        )
+        if resultado_findrisc is not None:
+            texto_relatorio += (
+                "\n"
+                "FINDRISC\n"
+                f"Pontuação: {resultado_findrisc['pontos']}\n"
+                f"Classificação: {resultado_findrisc['classificacao']}\n"
+                f"Estimativa em 10 anos: "
+                f"{resultado_findrisc['estimativa']}\n"
+            )
+
+        else:
+            texto_relatorio += (
+                "\n"
+                "FINDRISC\n"
+                "Não aplicável — diabetes já diagnosticado.\n"
+            )
 
         texto_relatorio += (
             "\n"
@@ -900,30 +701,31 @@ def mostrar_relatorio():
             f"Tabagismo: {dados_clinicos['tabagismo']}\n"
         )
 
-        if (
-            dados_clinicos["tabagismo"]
-            == "Fumante atual ou nos últimos 12 meses"
-        ):
+        if dados_clinicos["tabagismo"] in [
+            "Fumante atual",
+            "Ex-fumante há 12 meses ou menos"
+        ]:
 
             texto_relatorio += (
                 f"Média de cigarros por dia: "
                 f"{dados_clinicos['cigarros_dia']}\n"
             )
         
-        texto_relatorio += (
-            "\n"
-            "DADOS UTILIZADOS NO FINDRISC\n"
-            f"Atividade física: "
-            f"{dados_findrisc['atividade_fisica']}\n"
-            f"Frutas ou vegetais diariamente: "
-            f"{dados_findrisc['frutas_vegetais']}\n"
-            f"Medicamento para pressão alta: "
-            f"{dados_findrisc['medicacao_pressao']}\n"
-            f"Glicemia elevada: "
-            f"{dados_findrisc['glicemia_elevada']}\n"
-            f"Histórico familiar de diabetes: "
-            f"{dados_findrisc['historico_familiar']}\n"
-        )
+        if resultado_findrisc is not None:
+            texto_relatorio += (
+                "\n"
+                "DADOS UTILIZADOS NO FINDRISC\n"
+                f"Atividade física: "
+                f"{dados_findrisc['atividade_fisica']}\n"
+                f"Frutas ou vegetais diariamente: "
+                f"{dados_findrisc['frutas_vegetais']}\n"
+                f"Medicamento para pressão alta: "
+                f"{dados_findrisc['medicacao_pressao']}\n"
+                f"Glicemia elevada: "
+                f"{dados_findrisc['glicemia_elevada']}\n"
+                f"Histórico familiar de diabetes: "
+                f"{dados_findrisc['historico_familiar']}\n"
+            )
 
 
 
@@ -940,35 +742,35 @@ def mostrar_relatorio():
         texto_relatorio += (
             "\n"
             "DADOS UTILIZADOS NA CLASSIFICAÇÃO PERIODONTAL\n"
-            f"CAL máximo: {dados_periodontais['cal']} mm\n"
+            f"CAL máximo: {texto_valor(dados_periodontais['cal'], 'mm')}\n"
             f"%PBL: {pbl}%\n"
             f"Dentes perdidos por periodontite: "
-            f"{dados_periodontais['dentes_perdidos']}\n"
+            f"{texto_valor(dados_periodontais['dentes_perdidos'])}\n"
             f"Profundidade máxima de sondagem: "
-            f"{dados_periodontais['sondagem']} mm\n"
+            f"{texto_valor(dados_periodontais['sondagem'], 'mm')}\n"
             f"Perda óssea vertical máxima: "
-            f"{dados_periodontais['perda_vertical']} mm\n"
-            f"Furca: {dados_periodontais['furca']}\n"
+            f"{texto_valor(dados_periodontais['perda_vertical'], 'mm')}\n"
+            f"Furca: {texto_valor(dados_periodontais['furca'])}\n"
             f"Defeito do rebordo: "
-            f"{dados_periodontais['defeito_rebordo']}\n"
+            f"{texto_valor(dados_periodontais['defeito_rebordo'])}\n"
             f"Disfunção mastigatória: "
-            f"{dados_periodontais['disfuncao_mastigatoria']}\n"
-            f"Mobilidade: {dados_periodontais['mobilidade']}\n"
+            f"{texto_valor(dados_periodontais['disfuncao_mastigatoria'])}\n"
+            f"Mobilidade: {texto_valor(dados_periodontais['mobilidade'])}\n"
             f"Dentes remanescentes: "
-            f"{dados_periodontais['dentes_remanescentes']}\n"
+            f"{texto_valor(dados_periodontais['dentes_remanescentes'])}\n"
             f"Colapso de mordida: "
-            f"{dados_periodontais['colapso_mordida']}\n"
+            f"{texto_valor(dados_periodontais['colapso_mordida'])}\n"
             f"Migração dentária: "
-            f"{dados_periodontais['migracao_dentaria']}\n"
+            f"{texto_valor(dados_periodontais['migracao_dentaria'])}\n"
             f"Abertura em leque: "
-            f"{dados_periodontais['abertura_leque']}\n"
+            f"{texto_valor(dados_periodontais['abertura_leque'])}\n"
             f"Percentual de dentes envolvidos: "
-            f"{dados_periodontais['percentual_dentes_envolvidos']}%\n"
+            f"{texto_valor(dados_periodontais['percentual_dentes_envolvidos'], '%')}\n"
             f"Padrão molar/incisivo: "
-            f"{dados_periodontais['padrao_molar_incisivo']}\n"
+            f"{texto_valor(dados_periodontais['padrao_molar_incisivo'])}\n"
             f"Progressão em 5 anos: "
-            f"{dados_periodontais['progressao_5_anos']} mm\n"
-            f"Fenótipo: {dados_periodontais['fenotipo']}\n"
+            f"{texto_valor(dados_periodontais['progressao_5_anos'], 'mm')}\n"
+            f"Fenótipo: {texto_valor(dados_periodontais['fenotipo'])}\n"
         )
 
         if dados_periodontais["hba1c"] is not None:
@@ -1058,16 +860,57 @@ def mostrar_relatorio():
 
 
                 body {{
+                    background: #f5f7f5;
+                    color: #334a45;
                     font-family: Arial, sans-serif;
-                    max-width: 800px;
-                    margin: 40px auto;
-                    color: #222222;
+                    margin: 0;
+                    padding: 40px 20px;
                 }}
 
 
                 h1 {{
-                    text-align: center;
-                    margin-bottom: 30px;
+                    color: #17352f;
+                    font-size: 30px;
+                    margin: 8px 0 4px;
+                }}
+
+
+                .relatorio {{
+                    background: #ffffff;
+                    border: 1px solid #dce4e0;
+                    border-radius: 16px;
+                    box-shadow: 0 12px 34px rgba(23, 53, 47, 0.08);
+                    margin: 0 auto;
+                    max-width: 800px;
+                    overflow: hidden;
+                }}
+
+
+                .cabecalho {{
+                    background: #17352f;
+                    color: #e8f1ed;
+                    padding: 26px 30px;
+                }}
+
+
+                .cabecalho h1 {{
+                    color: #ffffff;
+                }}
+
+
+                .etiqueta {{
+                    color: #a9c9bc;
+                    font-size: 12px;
+                    font-weight: bold;
+                    letter-spacing: 1.5px;
+                    text-transform: uppercase;
+                }}
+
+
+                .caso {{
+                    color: #bed2ca;
+                    font-size: 13px;
+                    margin: 6px 0 0;
                 }}
 
 
@@ -1075,6 +918,8 @@ def mostrar_relatorio():
                     font-family: Arial, sans-serif;
                     font-size: 15px;
                     line-height: 1.6;
+                    margin: 0;
+                    padding: 28px 30px 34px;
                     white-space: pre-wrap;
                 }}
 
@@ -1082,8 +927,15 @@ def mostrar_relatorio():
                 @media print {{
 
                     body {{
+                        background: #ffffff;
+                        padding: 0;
+                    }}
+
+                    .relatorio {{
+                        border: 0;
+                        border-radius: 0;
+                        box-shadow: none;
                         max-width: none;
-                        margin: 0;
                     }}
 
                 }}
@@ -1095,9 +947,21 @@ def mostrar_relatorio():
 
         <body>
 
-            <h1>Relatório Integrado</h1>
+            <main class="relatorio">
 
-            <pre>{texto_seguro}</pre>
+                <header class="cabecalho">
+
+                    <div class="etiqueta">PerioDecision</div>
+
+                    <h1>Relatório Integrado</h1>
+
+                    <p class="caso">Caso {codigo_relatorio}</p>
+
+                </header>
+
+                <pre>{texto_seguro}</pre>
+
+            </main>
 
         </body>
 

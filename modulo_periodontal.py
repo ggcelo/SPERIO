@@ -1,328 +1,247 @@
+from html import escape
+
 import streamlit as st
 
 
 def mostrar_modulo_periodontal():
-    st.subheader("Classificação periodontal AAP/EFP")
-
-
-
-
-    st.markdown("### Estágio — critérios de severidade")
-
+    st.header("Classificação periodontal AAP/EFP")
+    st.write(
+        "Informe os critérios clínicos disponíveis. Uma única ação aplica, "
+        "na ordem, severidade, complexidade, extensão, progressão e "
+        "modificadores."
+    )
 
     # O %PBL já vem da avaliação radiográfica
     pbl = st.session_state["avaliacao"]["pbl"]
 
+    coluna_pbl, coluna_idade, coluna_modificadores = st.columns(3)
 
-    if pbl is None:
-        st.info("Nenhum %PBL foi informado até o momento.")
+    with coluna_pbl:
+        if pbl is None:
+            st.metric("%PBL radiográfico", "Não informado")
 
-    else:
-        st.write(
-            "Perda óssea radiográfica (%PBL):",
-            pbl,
-            "%"
-        )
-
-
-    with st.form("form_severidade_periodontal"):
-
-        cal = st.number_input(
-            "CAL interproximal máximo (mm):",
-            min_value=0.0,
-            value=None,
-            step=0.1
-        )
-
-        dentes_perdidos = st.number_input(
-            "Número de dentes perdidos atribuíveis à periodontite:",
-            min_value=0,
-            max_value=32,
-            value=None,
-            step=1
-        )
-
-        salvar_severidade = st.form_submit_button(
-            "Salvar critérios de severidade"
-        )
-
-
-    if salvar_severidade:
-
-        st.session_state["dados_periodontais"]["cal"] = cal
-
-        st.session_state["dados_periodontais"]["dentes_perdidos"] = (
-            dentes_perdidos
-        )
-
-        st.success("Critérios de severidade salvos.")
-
-        # Como os dados usados na classificação mudaram,
-        # o resultado periodontal anterior deve ser recalculado
-        st.session_state["avaliacao"]["periodontal"] = None
-
-
-
-    st.markdown("### Estágio — fatores de complexidade")
-
-
-    with st.form("form_complexidade_periodontal_1"):
-
-        sondagem = st.number_input(
-            "Profundidade máxima de sondagem (mm):",
-            min_value=0.0,
-            value=None,
-            step=0.1
-        )
-
-        perda_vertical = st.number_input(
-            "Perda óssea vertical máxima (mm):",
-            min_value=0.0,
-            value=None,
-            step=0.1
-        )
-
-        furca = st.selectbox(
-            "Maior classe de furca:",
-            [
-                "Nenhuma",
-                "I",
-                "II",
-                "III"
-            ],
-            index=None,
-            placeholder="Selecione"
-        )
-
-        defeito_rebordo = st.selectbox(
-            "Defeito do rebordo:",
-            [
-                "Nenhum",
-                "Moderado",
-                "Grave"
-            ],
-            index=None,
-            placeholder="Selecione"
-        )
-
-        salvar_complexidade_1 = st.form_submit_button(
-            "Salvar fatores de complexidade"
-        )
-
-
-    if salvar_complexidade_1:
-
-        st.session_state["dados_periodontais"]["sondagem"] = sondagem
-
-        st.session_state["dados_periodontais"]["perda_vertical"] = (
-            perda_vertical
-        )
-
-        st.session_state["dados_periodontais"]["furca"] = furca
-
-        st.session_state["dados_periodontais"]["defeito_rebordo"] = (
-            defeito_rebordo
-        )
-
-        # Os fatores de complexidade mudaram.
-        # A classificação anterior precisa ser recalculada
-        st.session_state["avaliacao"]["periodontal"] = None
-
-        st.success("Fatores de complexidade salvos.")
-
-    st.markdown("#### Outros fatores de complexidade")
-
-
-    with st.form("form_complexidade_periodontal_2"):
-
-        disfuncao_mastigatoria = st.selectbox(
-            "Há disfunção mastigatória?",
-            ["Não", "Sim"],
-            index=None,
-            placeholder="Selecione"
-        )
-
-        mobilidade = st.selectbox(
-            "Maior grau de mobilidade dentária:",
-            [
-                "Nenhuma",
-                "I",
-                "II",
-                "III"
-            ],
-            index=None,
-            placeholder="Selecione"
-        )
-
-        dentes_remanescentes = st.number_input(
-            "Número de dentes remanescentes:",
-            min_value=0,
-            max_value=32,
-            value=None,
-            step=1
-        )
-
-        colapso_mordida = st.selectbox(
-            "Há colapso de mordida?",
-            ["Não", "Sim"],
-            index=None,
-            placeholder="Selecione"
-        )
-
-        migracao_dentaria = st.selectbox(
-            "Há migração dentária?",
-            ["Não", "Sim"],
-            index=None,
-            placeholder="Selecione"
-        )
-
-        abertura_leque = st.selectbox(
-            "Há abertura em leque?",
-            ["Não", "Sim"],
-            index=None,
-            placeholder="Selecione"
-        )
-
-        salvar_complexidade_2 = st.form_submit_button(
-            "Salvar outros fatores de complexidade"
-        )
-
-
-    if salvar_complexidade_2:
-
-        st.session_state["dados_periodontais"]["disfuncao_mastigatoria"] = (
-            disfuncao_mastigatoria
-        )
-
-        st.session_state["dados_periodontais"]["mobilidade"] = mobilidade
-
-        st.session_state["dados_periodontais"]["dentes_remanescentes"] = (
-            dentes_remanescentes
-        )
-
-        st.session_state["dados_periodontais"]["colapso_mordida"] = (
-            colapso_mordida
-        )
-
-        st.session_state["dados_periodontais"]["migracao_dentaria"] = (
-            migracao_dentaria
-        )
-
-        st.session_state["dados_periodontais"]["abertura_leque"] = (
-            abertura_leque
-        )
-
-        # Os fatores de complexidade mudaram.
-        # A classificação anterior precisa ser recalculada.
-        st.session_state["avaliacao"]["periodontal"] = None
-
-        st.success("Outros fatores de complexidade salvos.")
-
-    st.markdown("### Extensão e distribuição")
-
-
-    with st.form("form_extensao_periodontal"):
-
-        percentual_dentes_envolvidos = st.number_input(
-            "Percentual de dentes envolvidos pela periodontite (%):",
-            min_value=0.0,
-            max_value=100.0,
-            value=None,
-            step=0.1
-        )
-
-        padrao_molar_incisivo = st.selectbox(
-            "Há padrão molar/incisivo?",
-            ["Não", "Sim"],
-            index=None,
-            placeholder="Selecione"
-        )
-
-        salvar_extensao = st.form_submit_button(
-            "Salvar extensão e distribuição"
-        )
-
-
-    if salvar_extensao:
-
-        st.session_state["dados_periodontais"]["percentual_dentes_envolvidos"] = (
-            percentual_dentes_envolvidos
-        )
-
-        st.session_state["dados_periodontais"]["padrao_molar_incisivo"] = (
-            padrao_molar_incisivo
-        )
-
-        # A extensão/distribuição foi alterada.
-        # O resultado periodontal anterior deve ser recalculado.
-        st.session_state["avaliacao"]["periodontal"] = None
-
-        st.success("Dados de extensão e distribuição salvos.")
-
-
-    st.markdown("### Grau — progressão e modificadores")
-
+        else:
+            st.metric("%PBL radiográfico", f"{pbl:.2f}%")
 
     # Dados que já foram preenchidos anteriormente
     idade = st.session_state["dados_caso"]["idade"]
-
     diabetes = st.session_state["dados_clinicos"]["diabetes"]
-
     tabagismo = st.session_state["dados_clinicos"]["tabagismo"]
-
     cigarros_dia = st.session_state["dados_clinicos"]["cigarros_dia"]
 
+    with coluna_idade:
+        st.metric("Idade", f"{idade} anos" if idade is not None else "Pendente")
 
-    st.write(
-        "Idade:",
-        idade if idade is not None else "Não informada"
-    )
+    with coluna_modificadores:
+        if diabetes is None and tabagismo is None:
+            resumo_modificadores = "Não informados"
 
-    st.write(
-        "Diabetes:",
-        diabetes if diabetes is not None else "Não informado"
-    )
+        else:
+            resumo_modificadores = (
+                f"Diabetes: {diabetes or '—'} · "
+                f"Tabagismo: {tabagismo or '—'}"
+            )
 
-    st.write(
-        "Tabagismo:",
-        tabagismo if tabagismo is not None else "Não informado"
-    )
+        st.metric("Modificadores compartilhados", resumo_modificadores)
 
-
-    with st.form("form_grau_periodontal"):
-
-        progressao_5_anos = st.number_input(
-            "Progressão periodontal em 5 anos (mm):",
-            min_value=0.0,
-            value=None,
-            step=0.1
+    if pbl is None:
+        st.info(
+            "Nenhum %PBL foi informado. A classificação ainda pode usar "
+            "CAL, perda dentária, progressão direta e fenótipo."
         )
 
-        fenotipo = st.selectbox(
-            "Fenótipo clínico em relação ao biofilme:",
-            [
+    else:
+        st.success(
+            f"%PBL de {pbl:.2f}% recebido do módulo radiográfico e disponível "
+            "para esta classificação."
+        )
+
+    dados_periodontais_anteriores = st.session_state["dados_periodontais"]
+
+    def indice_opcao(chave, opcoes):
+        valor = dados_periodontais_anteriores[chave]
+
+        if valor in opcoes:
+            return opcoes.index(valor)
+
+        return None
+
+    with st.form("form_classificacao_periodontal"):
+        st.markdown("### Severidade")
+        severidade_um, severidade_dois = st.columns(2)
+
+        with severidade_um:
+            cal = st.number_input(
+                "CAL interproximal máximo (mm):",
+                min_value=0.0,
+                value=dados_periodontais_anteriores["cal"],
+                step=0.1
+            )
+
+        with severidade_dois:
+            dentes_perdidos = st.number_input(
+                "Número de dentes perdidos atribuíveis à periodontite:",
+                min_value=0,
+                max_value=32,
+                value=dados_periodontais_anteriores["dentes_perdidos"],
+                step=1
+            )
+
+        st.markdown("### Complexidade")
+        complexidade_um, complexidade_dois = st.columns(2)
+
+        with complexidade_um:
+            sondagem = st.number_input(
+                "Profundidade máxima de sondagem (mm):",
+                min_value=0.0,
+                value=dados_periodontais_anteriores["sondagem"],
+                step=0.1
+            )
+
+            perda_vertical = st.number_input(
+                "Perda óssea vertical máxima (mm):",
+                min_value=0.0,
+                value=dados_periodontais_anteriores["perda_vertical"],
+                step=0.1
+            )
+
+            opcoes_furca = ["Nenhuma", "I", "II", "III"]
+            furca = st.selectbox(
+                "Maior classe de furca:",
+                opcoes_furca,
+                index=indice_opcao("furca", opcoes_furca),
+                placeholder="Selecione"
+            )
+
+            opcoes_rebordo = ["Nenhum", "Moderado", "Grave"]
+            defeito_rebordo = st.selectbox(
+                "Defeito do rebordo:",
+                opcoes_rebordo,
+                index=indice_opcao("defeito_rebordo", opcoes_rebordo),
+                placeholder="Selecione"
+            )
+
+            opcoes_sim_nao = ["Não", "Sim"]
+            disfuncao_mastigatoria = st.selectbox(
+                "Há disfunção mastigatória?",
+                opcoes_sim_nao,
+                index=indice_opcao(
+                    "disfuncao_mastigatoria",
+                    opcoes_sim_nao
+                ),
+                placeholder="Selecione"
+            )
+
+        with complexidade_dois:
+            opcoes_mobilidade = ["Nenhuma", "I", "II", "III"]
+            mobilidade = st.selectbox(
+                "Maior grau de mobilidade dentária:",
+                opcoes_mobilidade,
+                index=indice_opcao("mobilidade", opcoes_mobilidade),
+                placeholder="Selecione"
+            )
+
+            dentes_remanescentes = st.number_input(
+                "Número de dentes remanescentes:",
+                min_value=0,
+                max_value=32,
+                value=dados_periodontais_anteriores["dentes_remanescentes"],
+                step=1
+            )
+
+            colapso_mordida = st.selectbox(
+                "Há colapso de mordida?",
+                opcoes_sim_nao,
+                index=indice_opcao("colapso_mordida", opcoes_sim_nao),
+                placeholder="Selecione"
+            )
+
+            migracao_dentaria = st.selectbox(
+                "Há migração dentária?",
+                opcoes_sim_nao,
+                index=indice_opcao("migracao_dentaria", opcoes_sim_nao),
+                placeholder="Selecione"
+            )
+
+            abertura_leque = st.selectbox(
+                "Há abertura em leque?",
+                opcoes_sim_nao,
+                index=indice_opcao("abertura_leque", opcoes_sim_nao),
+                placeholder="Selecione"
+            )
+
+        st.markdown("### Extensão e distribuição")
+        extensao_um, extensao_dois = st.columns(2)
+
+        with extensao_um:
+            percentual_dentes_envolvidos = st.number_input(
+                "Percentual de dentes envolvidos pela periodontite (%):",
+                min_value=0.0,
+                max_value=100.0,
+                value=dados_periodontais_anteriores[
+                    "percentual_dentes_envolvidos"
+                ],
+                step=0.1
+            )
+
+        with extensao_dois:
+            padrao_molar_incisivo = st.selectbox(
+                "Há padrão molar/incisivo?",
+                opcoes_sim_nao,
+                index=indice_opcao("padrao_molar_incisivo", opcoes_sim_nao),
+                placeholder="Selecione"
+            )
+
+        st.markdown("### Progressão e modificadores do grau")
+        grau_um, grau_dois = st.columns(2)
+
+        with grau_um:
+            progressao_5_anos = st.number_input(
+                "Progressão periodontal em 5 anos (mm):",
+                min_value=0.0,
+                value=dados_periodontais_anteriores["progressao_5_anos"],
+                step=0.1
+            )
+
+            opcoes_fenotipo = [
                 "Biofilme abundante com baixa destruição",
                 "Destruição proporcional ao biofilme",
                 "Destruição superior à esperada"
-            ],
-            index=None,
-            placeholder="Selecione"
+            ]
+            fenotipo = st.selectbox(
+                "Fenótipo clínico em relação ao biofilme:",
+                opcoes_fenotipo,
+                index=indice_opcao("fenotipo", opcoes_fenotipo),
+                placeholder="Selecione"
+            )
+
+        with grau_dois:
+            hba1c = st.number_input(
+                "HbA1c (%), quando disponível:",
+                min_value=0.1,
+                max_value=20.0,
+                value=dados_periodontais_anteriores["hba1c"],
+                step=0.1,
+                help="Informe somente quando houver diabetes diagnosticado."
+            )
+
+            st.caption(
+                f"Diabetes: {diabetes or 'não informado'}  ·  "
+                f"Tabagismo: {tabagismo or 'não informado'}"
+            )
+
+            if cigarros_dia is not None:
+                st.caption(f"Média informada: {cigarros_dia} cigarros/dia")
+
+        classificar_periodontal = st.form_submit_button(
+            "Calcular classificação periodontal",
+            type="primary",
+            width="stretch"
         )
 
-        hba1c = st.number_input(
-            "HbA1c (%), quando disponível:",
-            min_value=0.1,
-            max_value=20.0,
-            value=None,
-            step=0.1
-        )
+    executar_classificacao = False
 
-        salvar_grau = st.form_submit_button(
-            "Salvar dados para graduação"
-        )
-
-
-    if salvar_grau:
+    if classificar_periodontal:
 
         if hba1c is not None and diabetes != "Sim":
 
@@ -332,31 +251,62 @@ def mostrar_modulo_periodontal():
             )
 
         else:
-
+            st.session_state["dados_periodontais"]["cal"] = cal
+            st.session_state["dados_periodontais"]["dentes_perdidos"] = (
+                dentes_perdidos
+            )
+            st.session_state["dados_periodontais"]["sondagem"] = sondagem
+            st.session_state["dados_periodontais"]["perda_vertical"] = (
+                perda_vertical
+            )
+            st.session_state["dados_periodontais"]["furca"] = furca
+            st.session_state["dados_periodontais"]["defeito_rebordo"] = (
+                defeito_rebordo
+            )
+            st.session_state["dados_periodontais"]["disfuncao_mastigatoria"] = (
+                disfuncao_mastigatoria
+            )
+            st.session_state["dados_periodontais"]["mobilidade"] = mobilidade
+            st.session_state["dados_periodontais"]["dentes_remanescentes"] = (
+                dentes_remanescentes
+            )
+            st.session_state["dados_periodontais"]["colapso_mordida"] = (
+                colapso_mordida
+            )
+            st.session_state["dados_periodontais"]["migracao_dentaria"] = (
+                migracao_dentaria
+            )
+            st.session_state["dados_periodontais"]["abertura_leque"] = (
+                abertura_leque
+            )
+            st.session_state["dados_periodontais"][
+                "percentual_dentes_envolvidos"
+            ] = percentual_dentes_envolvidos
+            st.session_state["dados_periodontais"]["padrao_molar_incisivo"] = (
+                padrao_molar_incisivo
+            )
             st.session_state["dados_periodontais"]["progressao_5_anos"] = (
                 progressao_5_anos
             )
+            st.session_state["dados_periodontais"]["fenotipo"] = fenotipo
+            st.session_state["dados_periodontais"]["hba1c"] = hba1c
 
-            st.session_state["dados_periodontais"]["fenotipo"] = (
-                fenotipo
-            )
-
-            st.session_state["dados_periodontais"]["hba1c"] = (
-                hba1c
-            )
-
+            # Como os dados usados na classificação mudaram,
+            # o resultado periodontal anterior deve ser recalculado
+            # Os fatores de complexidade mudaram.
+            # A classificação anterior precisa ser recalculada
+            # Os fatores de complexidade mudaram.
+            # A classificação anterior precisa ser recalculada.
+            # A extensão/distribuição foi alterada.
+            # O resultado periodontal anterior deve ser recalculado.
             # Os dados utilizados na graduação mudaram.
             # O resultado periodontal anterior deve ser recalculado.
             st.session_state["avaliacao"]["periodontal"] = None
-
-            st.success("Dados para graduação salvos.")
+            executar_classificacao = True
 
 
     #CALCULOS DE CLSSIFICAÇÃO DO ESTÁGIO - agora ficou pegado
-    st.markdown("### Classificação do estágio")
-
-
-    if st.button("Calcular estágio pela severidade"):
+    if executar_classificacao:
 
         dados_periodontais = st.session_state["dados_periodontais"]
 
@@ -443,61 +393,10 @@ def mostrar_modulo_periodontal():
                 "criterio_severidade"
             ] = criterio_severidade
 
-            st.success(
-                "Estágio pela severidade calculado com sucesso."
-            )
     resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
-
-
-    if (
-        resultado_periodontal is not None
-        and "estagio_severidade" in resultado_periodontal
-    ):
-
-        st.subheader("Resultado parcial do estágio")
-
-        st.write(
-            "Estágio pela severidade:",
-            resultado_periodontal["estagio_severidade"]
-        )
-
-        st.write(
-            "Critério determinante:",
-            resultado_periodontal["criterio_severidade"]
-        )
-
-        st.info(
-            "Resultado parcial. Os fatores de complexidade "
-            "ainda serão avaliados."
-        )
-
-    resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
-
-
-    if (
-        resultado_periodontal is not None
-        and "estagio" in resultado_periodontal
-    ):
-
-        st.subheader("Estágio periodontal")
-
-        st.write(
-            "Estágio pela severidade:",
-            resultado_periodontal["estagio_severidade"]
-        )
-
-        st.write(
-            "Estágio final:",
-            resultado_periodontal["estagio"]
-        )
-
-        st.write(
-            "Fatores de complexidade identificados:",
-            resultado_periodontal["fatores_complexidade"]
-        )
 
     #APLICA FATORES DE COMPLEXIDADES
-    if st.button("Aplicar fatores de complexidade"):
+    if executar_classificacao:
 
         resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
@@ -738,10 +637,6 @@ def mostrar_modulo_periodontal():
                 len(dados_ausentes_estagio) > 0
             )
 
-            st.success(
-                "Fatores de complexidade aplicados com sucesso."
-            )
-
             if len(dados_ausentes_estagio) > 0:
 
                 st.warning(
@@ -749,18 +644,9 @@ def mostrar_modulo_periodontal():
                     "fatores de complexidade não informados."
                 )
 
-                st.write(
-                    "Dados ausentes:",
-                    dados_ausentes_estagio
-                )
-
-
             # CALCULA EXTENSÃO E DISTRIBUIÇÃO
 
-    st.markdown("### Classificação da extensão e distribuição")
-
-
-    if st.button("Calcular extensão/distribuição"):
+    if executar_classificacao:
 
         dados_periodontais = st.session_state["dados_periodontais"]
 
@@ -811,29 +697,10 @@ def mostrar_modulo_periodontal():
                 "extensao_distribuicao"
             ] = extensao_distribuicao
 
-            st.success(
-                "Extensão/distribuição calculada com sucesso."
-            )
-
-
     resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
-
-
-    if (
-        resultado_periodontal is not None
-        and "extensao_distribuicao" in resultado_periodontal
-    ):
-
-        st.write(
-            "Extensão/distribuição:",
-            resultado_periodontal["extensao_distribuicao"]
-        )
     # CALCULA O GRAU-BASE PELA PROGRESSÃO
 
-    st.markdown("### Classificação do grau")
-
-
-    if st.button("Calcular grau pela progressão"):
+    if executar_classificacao:
 
         dados_periodontais = st.session_state["dados_periodontais"]
 
@@ -956,54 +823,11 @@ def mostrar_modulo_periodontal():
                 criterio_grau_base == "Fenótipo"
             )
 
-            st.success(
-                "Grau-base calculado com sucesso."
-            )
-
-
     resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
+    # APLICA OS MODIFICADORES DO GRAU
 
-    if (
-        resultado_periodontal is not None
-        and "grau_base" in resultado_periodontal
-    ):
-
-        st.subheader("Resultado parcial do grau")
-
-        st.write(
-            "Grau-base:",
-            resultado_periodontal["grau_base"]
-        )
-
-        st.write(
-            "Critério utilizado:",
-            resultado_periodontal["criterio_grau_base"]
-        )
-
-
-        if resultado_periodontal["razao_pbl_idade"] is not None:
-
-            st.write(
-                "Relação %PBL / idade:",
-                resultado_periodontal["razao_pbl_idade"]
-            )
-
-        if resultado_periodontal["grau_base_provisorio"]:
-
-            st.warning(
-                "O grau-base é provisório, pois foi estimado "
-                "somente pelo fenótipo clínico."
-            )
-            
-        st.info(
-            "Resultado parcial. Tabagismo e diabetes "
-            "ainda serão aplicados como modificadores."
-        )
-
-        # APLICA OS MODIFICADORES DO GRAU
-
-    if st.button("Aplicar modificadores do grau"):
+    if executar_classificacao:
 
         resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
@@ -1169,10 +993,6 @@ def mostrar_modulo_periodontal():
             )
 
 
-            st.success(
-                "Modificadores aplicados com sucesso."
-            )
-
             if resultado_periodontal["grau_provisorio"]:
 
                 st.warning(
@@ -1181,42 +1001,11 @@ def mostrar_modulo_periodontal():
                 )
 
 
-                if len(dados_ausentes_grau) > 0:
-
-                    st.write(
-                        "Dados ausentes:",
-                        dados_ausentes_grau
-                    )
             resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
+    # CONSOLIDA A CLASSIFICAÇÃO PERIODONTAL FINAL
 
-    if (
-        resultado_periodontal is not None
-        and "grau" in resultado_periodontal
-    ):
-
-        st.subheader("Grau periodontal")
-
-        st.write(
-            "Grau-base:",
-            resultado_periodontal["grau_base"]
-        )
-
-        st.write(
-            "Grau final:",
-            resultado_periodontal["grau"]
-        )
-
-        st.write(
-            "Modificadores identificados:",
-            resultado_periodontal["modificadores_grau"]
-        )
-        # CONSOLIDA A CLASSIFICAÇÃO PERIODONTAL FINAL
-
-    st.markdown("### Classificação periodontal final")
-
-
-    if st.button("Gerar classificação periodontal final"):
+    if executar_classificacao:
 
         resultado_periodontal = st.session_state["avaliacao"]["periodontal"]
 
@@ -1317,99 +1106,117 @@ def mostrar_modulo_periodontal():
         resultado_periodontal is not None
         and "classificacao_final" in resultado_periodontal
     ):
-
-        st.subheader("Resultado periodontal final")
-
-        st.write(
-            "Estágio:",
-            resultado_periodontal["estagio"]
-        )
-
-        st.write(
-            "Extensão/distribuição:",
-            resultado_periodontal["extensao_distribuicao"]
-        )
-
-        st.write(
-            "Grau:",
-            resultado_periodontal["grau"]
-        )
-
-        if resultado_periodontal.get(
+        classificacao_provisoria = resultado_periodontal.get(
             "classificacao_provisoria",
             False
-        ):
-
-            st.warning(
-                resultado_periodontal["classificacao_final"]
-                + " — CLASSIFICAÇÃO PROVISÓRIA"
-            )
-
-        else:
-
-            st.success(
-                resultado_periodontal["classificacao_final"]
-            )
-
-        st.write(
-            "Critério de severidade:",
-            resultado_periodontal["criterio_severidade"]
         )
 
+        estado_classificacao = "Classificação provisória"
+        classe_estado = "perio-result-card is-warning"
 
-        if len(
-            resultado_periodontal["fatores_complexidade"]
-        ) > 0:
+        if not classificacao_provisoria:
+            estado_classificacao = "Classificação definitiva"
+            classe_estado = "perio-result-card"
 
-            st.write(
-                "Fatores de complexidade identificados:",
-                resultado_periodontal["fatores_complexidade"]
-            )
-
-        st.write(
-            "Critério do grau-base:",
-            resultado_periodontal["criterio_grau_base"]
+        st.markdown(
+            f"""
+            <section class="perio-result">
+                <div class="perio-result__eyebrow">
+                    Resultado periodontal final
+                </div>
+                <div class="perio-result__title">
+                    {escape(resultado_periodontal['classificacao_final'])}
+                </div>
+                <div class="perio-result__grid">
+                    <div class="perio-result-card">
+                        <div class="perio-result-card__label">Estágio</div>
+                        <div class="perio-result-card__value">
+                            {escape(resultado_periodontal['estagio'])}
+                        </div>
+                    </div>
+                    <div class="perio-result-card">
+                        <div class="perio-result-card__label">
+                            Extensão / distribuição
+                        </div>
+                        <div class="perio-result-card__value">
+                            {escape(resultado_periodontal['extensao_distribuicao'])}
+                        </div>
+                    </div>
+                    <div class="perio-result-card">
+                        <div class="perio-result-card__label">Grau</div>
+                        <div class="perio-result-card__value">
+                            {escape(resultado_periodontal['grau'])}
+                        </div>
+                    </div>
+                    <div class="{classe_estado}">
+                        <div class="perio-result-card__label">Situação</div>
+                        <div class="perio-result-card__value">
+                            {estado_classificacao}
+                        </div>
+                    </div>
+                </div>
+            </section>
+            """,
+            unsafe_allow_html=True
         )
 
-
-        if len(
-            resultado_periodontal["modificadores_grau"]
-        ) > 0:
+        with st.expander("Ver critérios determinantes e detalhes"):
+            st.write(
+                "**Critério de severidade:**",
+                resultado_periodontal["criterio_severidade"]
+            )
 
             st.write(
-                "Modificadores do grau identificados:",
-                resultado_periodontal["modificadores_grau"]
+                "**Critério utilizado para o grau-base:**",
+                resultado_periodontal["criterio_grau_base"]
             )
 
-        if resultado_periodontal.get(
-            "classificacao_provisoria",
-            False
-        ):
-
-            dados_ausentes_estagio = resultado_periodontal.get(
-                "dados_ausentes_estagio",
-                []
-            )
-
-            dados_ausentes_grau = resultado_periodontal.get(
-                "dados_ausentes_grau",
-                []
-            )
-
-
-            if len(dados_ausentes_estagio) > 0:
-
+            if resultado_periodontal["razao_pbl_idade"] is not None:
                 st.write(
-                    "Dados ausentes relacionados ao estágio:",
-                    dados_ausentes_estagio
+                    "**Relação %PBL / idade:**",
+                    resultado_periodontal["razao_pbl_idade"]
                 )
 
+            fatores_complexidade = resultado_periodontal[
+                "fatores_complexidade"
+            ]
+            st.markdown("**Fatores de complexidade identificados**")
 
-            if len(dados_ausentes_grau) > 0:
+            if len(fatores_complexidade) > 0:
+                for fator in fatores_complexidade:
+                    st.write("-", fator)
 
-                st.write(
-                    "Dados ausentes relacionados ao grau:",
-                    dados_ausentes_grau
+            else:
+                st.write("Nenhum.")
+
+            modificadores_grau = resultado_periodontal["modificadores_grau"]
+            st.markdown("**Modificadores do grau identificados**")
+
+            if len(modificadores_grau) > 0:
+                for modificador in modificadores_grau:
+                    st.write("-", modificador)
+
+            else:
+                st.write("Nenhum.")
+
+            if classificacao_provisoria:
+                dados_ausentes_estagio = resultado_periodontal.get(
+                    "dados_ausentes_estagio",
+                    []
+                )
+                dados_ausentes_grau = resultado_periodontal.get(
+                    "dados_ausentes_grau",
+                    []
                 )
 
-        st.divider()
+                if len(dados_ausentes_estagio) > 0:
+                    st.markdown("**Dados ausentes relacionados ao estágio**")
+
+                    for dado in dados_ausentes_estagio:
+                        st.write("-", dado)
+
+                if len(dados_ausentes_grau) > 0:
+                    st.markdown("**Dados ausentes relacionados ao grau**")
+
+                    for dado in dados_ausentes_grau:
+                        st.write("-", dado)

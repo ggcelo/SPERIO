@@ -1,55 +1,136 @@
+from html import escape
+
 import streamlit as st
 
 
 def mostrar_findrisc():
-    st.subheader("FINDRISC")
+    st.header("FINDRISC")
+    st.write(
+        "Estime o risco de desenvolvimento de diabetes tipo 2 em 10 anos "
+        "a partir dos dados compartilhados e das perguntas abaixo."
+    )
+
+    idade = st.session_state["dados_caso"]["idade"]
+    sexo = st.session_state["dados_caso"]["sexo"]
+    imc = st.session_state["dados_clinicos"]["imc"]
+    cintura = st.session_state["dados_clinicos"]["cintura"]
+    diabetes = st.session_state["dados_clinicos"]["diabetes"]
+
+    if diabetes == "Sim":
+        st.session_state["avaliacao"]["findrisc"] = None
+        st.info(
+            "FINDRISC não aplicável — diabetes já diagnosticado. "
+            "O instrumento estima risco futuro de desenvolvimento de "
+            "diabetes tipo 2."
+        )
+        return
+
+    st.markdown("#### Dados compartilhados utilizados")
+    coluna_idade, coluna_imc, coluna_cintura = st.columns(3)
+
+    with coluna_idade:
+        st.metric("Idade", f"{idade} anos" if idade is not None else "Pendente")
+
+    with coluna_imc:
+        st.metric("IMC", f"{imc} kg/m²" if imc is not None else "Pendente")
+
+    with coluna_cintura:
+        st.metric(
+            "Cintura",
+            f"{cintura} cm" if cintura is not None else "Pendente"
+        )
+
+    dados_anteriores = st.session_state["dados_findrisc"]
+    opcoes_sim_nao = ["Sim", "Não"]
 
     with st.form("form_findrisc"):
+        st.markdown("#### Perguntas específicas do FINDRISC")
+        coluna_um, coluna_dois = st.columns(2)
 
-        atividade_fisica = st.selectbox(
-            "Realiza pelo menos 30 minutos de atividade física por dia?",
-            ["Sim", "Não"],
-            index=None,
-            placeholder="Selecione"
-        )
+        with coluna_um:
+            indice_atividade = None
 
-        frutas_vegetais = st.selectbox(
-            "Consome frutas ou vegetais diariamente?",
-            ["Sim", "Não"],
-            index=None,
-            placeholder="Selecione"
-        )
+            if dados_anteriores["atividade_fisica"] in opcoes_sim_nao:
+                indice_atividade = opcoes_sim_nao.index(
+                    dados_anteriores["atividade_fisica"]
+                )
 
-        medicacao_pressao = st.selectbox(
-            "Já utilizou regularmente medicamento para pressão alta?",
-            ["Sim", "Não"],
-            index=None,
-            placeholder="Selecione"
-        )
+            atividade_fisica = st.radio(
+                "Realiza pelo menos 30 minutos de atividade física por dia?",
+                opcoes_sim_nao,
+                horizontal=True,
+                index=indice_atividade
+            )
 
-        glicemia_elevada = st.selectbox(
-            "Alguma vez foi identificada glicemia elevada?",
-            ["Sim", "Não"],
-            index=None,
-            placeholder="Selecione"
-        )
+            indice_frutas = None
 
-        historico_familiar = st.selectbox(
-            "Histórico familiar de diabetes:",
-            [
+            if dados_anteriores["frutas_vegetais"] in opcoes_sim_nao:
+                indice_frutas = opcoes_sim_nao.index(
+                    dados_anteriores["frutas_vegetais"]
+                )
+
+            frutas_vegetais = st.radio(
+                "Consome frutas ou vegetais diariamente?",
+                opcoes_sim_nao,
+                horizontal=True,
+                index=indice_frutas
+            )
+
+            indice_pressao = None
+
+            if dados_anteriores["medicacao_pressao"] in opcoes_sim_nao:
+                indice_pressao = opcoes_sim_nao.index(
+                    dados_anteriores["medicacao_pressao"]
+                )
+
+            medicacao_pressao = st.radio(
+                "Já utilizou regularmente medicamento para pressão alta?",
+                opcoes_sim_nao,
+                horizontal=True,
+                index=indice_pressao
+            )
+
+        with coluna_dois:
+            indice_glicemia = None
+
+            if dados_anteriores["glicemia_elevada"] in opcoes_sim_nao:
+                indice_glicemia = opcoes_sim_nao.index(
+                    dados_anteriores["glicemia_elevada"]
+                )
+
+            glicemia_elevada = st.radio(
+                "Alguma vez foi identificada glicemia elevada?",
+                opcoes_sim_nao,
+                horizontal=True,
+                index=indice_glicemia
+            )
+
+            opcoes_historico = [
                 "Nenhum familiar",
                 "Avós, tios ou primos",
                 "Pais, irmãos ou filhos"
-            ],
-            index=None,
-            placeholder="Selecione"
+            ]
+            indice_historico = None
+
+            if dados_anteriores["historico_familiar"] in opcoes_historico:
+                indice_historico = opcoes_historico.index(
+                    dados_anteriores["historico_familiar"]
+                )
+
+            historico_familiar = st.selectbox(
+                "Histórico familiar de diabetes:",
+                opcoes_historico,
+                index=indice_historico,
+                placeholder="Selecione"
+            )
+
+        calcular_findrisc = st.form_submit_button(
+            "Calcular FINDRISC",
+            type="primary",
+            width="stretch"
         )
 
-        salvar_findrisc = st.form_submit_button(
-            "Salvar dados do FINDRISC"
-        )
-
-    if salvar_findrisc:
+    if calcular_findrisc:
 
         if atividade_fisica is None:
             st.error("Informe a atividade física.")
@@ -66,6 +147,17 @@ def mostrar_findrisc():
         elif historico_familiar is None:
             st.error("Informe o histórico familiar de diabetes.")
 
+        elif (
+            idade is None
+            or sexo is None
+            or imc is None
+            or cintura is None
+        ):
+            st.error(
+                "Preencha e salve os dados compartilhados do caso "
+                "antes de calcular o FINDRISC."
+            )
+
         else:
             st.session_state["dados_findrisc"]["atividade_fisica"] = atividade_fisica
             st.session_state["dados_findrisc"]["frutas_vegetais"] = frutas_vegetais
@@ -77,42 +169,7 @@ def mostrar_findrisc():
             # o resultado anterior do FINDRISC deve ser recalculado
             st.session_state["avaliacao"]["findrisc"] = None
 
-            st.success("Dados do FINDRISC salvos.")
-
-    if st.button("Calcular FINDRISC"):
-
-        idade = st.session_state["dados_caso"]["idade"]
-        sexo = st.session_state["dados_caso"]["sexo"]
-
-        imc = st.session_state["dados_clinicos"]["imc"]
-        cintura = st.session_state["dados_clinicos"]["cintura"]
-        diabetes = st.session_state["dados_clinicos"]["diabetes"]
-
-        dados_findrisc = st.session_state["dados_findrisc"]
-
-        if diabetes == "Sim":
-
-            st.session_state["avaliacao"]["findrisc"] = None
-
-            st.warning( 
-                "O FINDRISC não é aplicado porque o caso possui "
-                "diabetes já diagnosticado."
-            )
-
-        elif (
-            idade is None
-            or sexo is None
-            or imc is None
-            or cintura is None
-            or None in dados_findrisc.values()
-        ):
-            st.error(
-                "Preencha e salve todos os dados necessários "
-                "antes de calcular o FINDRISC."
-            )
-
-        else:
-
+            dados_findrisc = st.session_state["dados_findrisc"]
             pontos = 0
 
 
@@ -226,13 +283,42 @@ def mostrar_findrisc():
 
 
     if resultado_findrisc is not None:
+        classe_resultado = "perio-result-card"
 
-        st.subheader("Resultado FINDRISC")
+        if resultado_findrisc["classificacao"] in ["Alto", "Muito alto"]:
+            classe_resultado = "perio-result-card is-warning"
 
-        st.write("Pontuação:", resultado_findrisc["pontos"])
+        st.markdown(
+            f"""
+            <section class="perio-result">
+                <div class="perio-result__eyebrow">Resultado FINDRISC</div>
+                <div class="perio-result__title">Risco estimado em 10 anos</div>
+                <div class="perio-result__grid">
+                    <div class="perio-result-card">
+                        <div class="perio-result-card__label">Pontuação</div>
+                        <div class="perio-result-card__value">
+                            {resultado_findrisc['pontos']} pontos
+                        </div>
+                    </div>
+                    <div class="{classe_resultado}">
+                        <div class="perio-result-card__label">Classificação</div>
+                        <div class="perio-result-card__value">
+                            {escape(resultado_findrisc['classificacao'])}
+                        </div>
+                    </div>
+                    <div class="perio-result-card">
+                        <div class="perio-result-card__label">Estimativa</div>
+                        <div class="perio-result-card__value">
+                            {escape(resultado_findrisc['estimativa'])}
+                        </div>
+                    </div>
+                </div>
+            </section>
+            """,
+            unsafe_allow_html=True
+        )
 
-        st.write("Classificação:", resultado_findrisc["classificacao"])
-
-        st.write("Risco estimado em 10 anos:", resultado_findrisc["estimativa"])
-
-    st.divider()
+        st.caption(
+            "Instrumento de rastreamento de risco. O resultado não estabelece "
+            "diagnóstico médico."
+        )
