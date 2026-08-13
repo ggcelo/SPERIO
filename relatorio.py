@@ -42,17 +42,41 @@ def mostrar_relatorio():
         resultado_periodontal is not None
         and "classificacao_final" in resultado_periodontal
     )
+    periodontal_provisorio = (
+        periodontal_concluido
+        and resultado_periodontal.get("classificacao_provisoria", False)
+    )
+    periodontal_insuficiente = (
+        resultado_periodontal is not None
+        and resultado_periodontal.get("status") == "dados_insuficientes"
+    )
     findrisc_nao_aplicavel = dados_clinicos["diabetes"] == "Sim"
+    findrisc_concluido = (
+        resultado_findrisc is not None
+        and "pontos" in resultado_findrisc
+    )
+    findrisc_insuficiente = (
+        resultado_findrisc is not None
+        and resultado_findrisc.get("status") == "dados_insuficientes"
+    )
+    interheart_concluido = (
+        resultado_interheart is not None
+        and "pontos" in resultado_interheart
+    )
+    interheart_insuficiente = (
+        resultado_interheart is not None
+        and resultado_interheart.get("status") == "dados_insuficientes"
+    )
 
     avaliacoes_concluidas = 0
 
-    if periodontal_concluido:
+    if periodontal_concluido and not periodontal_provisorio:
         avaliacoes_concluidas += 1
 
-    if resultado_findrisc is not None or findrisc_nao_aplicavel:
+    if findrisc_concluido or findrisc_nao_aplicavel:
         avaliacoes_concluidas += 1
 
-    if resultado_interheart is not None:
+    if interheart_concluido:
         avaliacoes_concluidas += 1
 
     codigo_relatorio = escape(str(dados_caso["codigo"] or "Caso não definido"))
@@ -93,6 +117,29 @@ def mostrar_relatorio():
         valor_periodontal = resultado_periodontal["classificacao_final"]
         classe_periodontal = "perio-status is-complete"
 
+        if periodontal_provisorio:
+            estado_periodontal = "Provisório"
+            classe_periodontal = "perio-status is-warning"
+
+    elif periodontal_insuficiente:
+        estado_periodontal = "Dados insuficientes"
+        partes_periodontais = []
+
+        if resultado_periodontal.get("estagio") is not None:
+            partes_periodontais.append(
+                f"Estágio {resultado_periodontal['estagio']}"
+            )
+
+        if resultado_periodontal.get("grau") is not None:
+            partes_periodontais.append(f"Grau {resultado_periodontal['grau']}")
+
+        valor_periodontal = (
+            " · ".join(partes_periodontais)
+            if len(partes_periodontais) > 0
+            else "Classificação não determinada."
+        )
+        classe_periodontal = "perio-status is-warning"
+
     else:
         estado_periodontal = "Pendente"
         valor_periodontal = "Classificação ainda não concluída."
@@ -105,12 +152,17 @@ def mostrar_relatorio():
         classe_pbl = "perio-status is-complete"
 
     else:
-        estado_pbl = "Pendente"
-        valor_pbl = "%PBL ainda não calculado."
-        classe_pbl = "perio-status"
+        estado_pbl = "Não realizada"
+        valor_pbl = "Análise radiográfica não realizada."
+        classe_pbl = "perio-status is-na"
 
     # FINDRISC
-    if resultado_findrisc is not None:
+    if findrisc_nao_aplicavel:
+        estado_findrisc = "Não aplicável"
+        valor_findrisc = "Diabetes já diagnosticado."
+        classe_findrisc = "perio-status is-na"
+
+    elif findrisc_concluido:
         estado_findrisc = "Concluído"
         valor_findrisc = (
             f"{resultado_findrisc['pontos']} pontos · "
@@ -118,10 +170,10 @@ def mostrar_relatorio():
         )
         classe_findrisc = "perio-status is-complete"
 
-    elif findrisc_nao_aplicavel:
-        estado_findrisc = "Não aplicável"
-        valor_findrisc = "Diabetes já diagnosticado."
-        classe_findrisc = "perio-status is-na"
+    elif findrisc_insuficiente:
+        estado_findrisc = "Dados insuficientes"
+        valor_findrisc = "Faltam informações necessárias para o cálculo."
+        classe_findrisc = "perio-status is-warning"
 
     else:
         estado_findrisc = "Pendente"
@@ -129,13 +181,18 @@ def mostrar_relatorio():
         classe_findrisc = "perio-status"
 
     # INTERHEART
-    if resultado_interheart is not None:
+    if interheart_concluido:
         estado_interheart = "Concluído"
         valor_interheart = (
             f"{resultado_interheart['pontos']} pontos · "
             f"{resultado_interheart['classificacao']}"
         )
         classe_interheart = "perio-status is-complete"
+
+    elif interheart_insuficiente:
+        estado_interheart = "Dados insuficientes"
+        valor_interheart = "Faltam informações necessárias para o cálculo."
+        classe_interheart = "perio-status is-warning"
 
     else:
         estado_interheart = "Pendente"
@@ -173,6 +230,7 @@ def mostrar_relatorio():
                         {escape(str(valor))}
                     </div>
                 </div>
+                <br>
                 """,
                 unsafe_allow_html=True
             )
@@ -192,7 +250,8 @@ def mostrar_relatorio():
             with coluna_extensao:
                 st.metric(
                     "Extensão / distribuição",
-                    resultado_periodontal["extensao_distribuicao"]
+                    resultado_periodontal.get("extensao_distribuicao")
+                    or "Não determinada"
                 )
 
             with coluna_grau:
@@ -257,6 +316,10 @@ def mostrar_relatorio():
                     "dados_ausentes_grau",
                     []
                 )
+                dados_ausentes_extensao = resultado_periodontal.get(
+                    "dados_ausentes_extensao",
+                    []
+                )
 
                 if len(dados_ausentes_estagio) > 0:
                     st.markdown("**Dados ausentes relacionados ao estágio**")
@@ -270,8 +333,36 @@ def mostrar_relatorio():
                     for dado in dados_ausentes_grau:
                         st.write("-", dado)
 
+                if len(dados_ausentes_extensao) > 0:
+                    st.markdown(
+                        "**Dados ausentes relacionados à extensão/distribuição**"
+                    )
+
+                    for dado in dados_ausentes_extensao:
+                        st.write("-", dado)
+
+        elif periodontal_insuficiente:
+            st.warning("Dados insuficientes para concluir a classificação.")
+
+            if resultado_periodontal.get("estagio") is not None:
+                st.write("**Estágio disponível:**", resultado_periodontal["estagio"])
+
+            if resultado_periodontal.get("grau") is not None:
+                st.write("**Grau disponível:**", resultado_periodontal["grau"])
+
+            dados_ausentes_periodontal = resultado_periodontal.get(
+                "dados_ausentes",
+                []
+            )
+
+            if len(dados_ausentes_periodontal) > 0:
+                st.markdown("**Dados ausentes:**")
+
+                for dado in dados_ausentes_periodontal:
+                    st.write("-", dado)
+
         else:
-            st.info("Ainda não existem resultados periodontais completos.")
+            st.info("Classificação periodontal pendente.")
 
     # -------------------------
     # DETALHAMENTO RADIOGRÁFICO
@@ -290,7 +381,7 @@ def mostrar_relatorio():
                 st.metric("Superfície determinante", superficie_determinante)
 
         else:
-            st.info("Análise radiográfica ainda não concluída.")
+            st.info("Análise radiográfica não realizada.")
 
     with st.expander("Detalhamento dos escores de risco"):
         coluna_findrisc, coluna_interheart = st.columns(2)
@@ -299,7 +390,12 @@ def mostrar_relatorio():
         with coluna_findrisc:
             st.markdown("#### FINDRISC")
 
-            if resultado_findrisc is not None:
+            if findrisc_nao_aplicavel:
+                st.info(
+                    "FINDRISC não aplicável — diabetes já diagnosticado."
+                )
+
+            elif findrisc_concluido:
                 st.metric("Pontuação", resultado_findrisc["pontos"])
                 st.write(
                     "**Classificação:**",
@@ -310,10 +406,12 @@ def mostrar_relatorio():
                     resultado_findrisc["estimativa"]
                 )
 
-            elif findrisc_nao_aplicavel:
-                st.info(
-                    "FINDRISC não aplicável — diabetes já diagnosticado."
-                )
+            elif findrisc_insuficiente:
+                st.warning("Dados insuficientes para cálculo.")
+                st.markdown("**Informações ausentes:**")
+
+                for dado in resultado_findrisc.get("dados_ausentes", []):
+                    st.write("-", dado)
 
             else:
                 st.info("FINDRISC ainda não calculado.")
@@ -322,7 +420,7 @@ def mostrar_relatorio():
         with coluna_interheart:
             st.markdown("#### INTERHEART")
 
-            if resultado_interheart is not None:
+            if interheart_concluido:
                 st.metric("Pontuação", resultado_interheart["pontos"])
                 st.write(
                     "**Classificação:**",
@@ -332,6 +430,30 @@ def mostrar_relatorio():
                     "**Relação cintura-quadril:**",
                     resultado_interheart["rcq"]
                 )
+
+            elif interheart_insuficiente:
+                st.warning("Dados insuficientes para cálculo.")
+
+                dados_ausentes_interheart = resultado_interheart.get(
+                    "dados_ausentes",
+                    []
+                )
+                dados_invalidos_interheart = resultado_interheart.get(
+                    "dados_invalidos",
+                    []
+                )
+
+                if len(dados_ausentes_interheart) > 0:
+                    st.markdown("**Informações ausentes:**")
+
+                    for dado in dados_ausentes_interheart:
+                        st.write("-", dado)
+
+                if len(dados_invalidos_interheart) > 0:
+                    st.markdown("**Informações incompatíveis:**")
+
+                    for dado in dados_invalidos_interheart:
+                        st.write("-", dado)
 
             else:
                 st.info("INTERHEART ainda não calculado.")
@@ -456,29 +578,22 @@ def mostrar_relatorio():
 
     # Dados do caso
 
-    if (
-        dados_caso["codigo"] is None
-        or dados_caso["idade"] is None
-        or dados_caso["sexo"] is None
-    ):
+    if dados_caso["codigo"] is None:
 
         pendencias.append(
-            "Dados de identificação do caso incompletos."
-        )
-
-
-    # %PBL
-
-    if pbl is None:
-
-        pendencias.append(
-            "%PBL ainda não informado."
+            "Código do caso não informado."
         )
 
 
     # FINDRISC
 
-    if resultado_findrisc is None and not findrisc_nao_aplicavel:
+    if findrisc_insuficiente:
+
+        pendencias.append(
+            "FINDRISC com dados insuficientes."
+        )
+
+    elif not findrisc_concluido and not findrisc_nao_aplicavel:
 
         pendencias.append(
             "FINDRISC ainda não calculado."
@@ -487,7 +602,13 @@ def mostrar_relatorio():
 
     # INTERHEART
 
-    if resultado_interheart is None:
+    if interheart_insuficiente:
+
+        pendencias.append(
+            "INTERHEART com dados insuficientes."
+        )
+
+    elif not interheart_concluido:
 
         pendencias.append(
             "INTERHEART ainda não calculado."
@@ -496,10 +617,19 @@ def mostrar_relatorio():
 
     # Classificação periodontal
 
-    if (
-        resultado_periodontal is None
-        or "classificacao_final" not in resultado_periodontal
-    ):
+    if periodontal_insuficiente:
+
+        pendencias.append(
+            "Classificação periodontal com dados insuficientes."
+        )
+
+    elif periodontal_provisorio:
+
+        pendencias.append(
+            "Classificação periodontal provisória."
+        )
+
+    elif not periodontal_concluido:
 
         pendencias.append(
             "Classificação periodontal ainda não concluída."
@@ -567,16 +697,19 @@ def mostrar_relatorio():
     st.subheader("Preparação do relatório final")
 
 
-    if len(pendencias) == 0:
+    if dados_caso["codigo"] is not None:
     
         data_hora_relatorio = datetime.now().strftime(
             "%d/%m/%Y %H:%M"
         )
 
+        resultado_periodontal_relatorio = resultado_periodontal or {}
+
         # Prepara os fatores de complexidade para o relatório
-        fatores_complexidade = resultado_periodontal[
-            "fatores_complexidade"
-        ]
+        fatores_complexidade = resultado_periodontal_relatorio.get(
+            "fatores_complexidade",
+            []
+        )
 
         if len(fatores_complexidade) > 0:
 
@@ -590,9 +723,10 @@ def mostrar_relatorio():
 
 
         # Prepara os modificadores do grau para o relatório
-        modificadores_grau = resultado_periodontal[
-            "modificadores_grau"
-        ]
+        modificadores_grau = resultado_periodontal_relatorio.get(
+            "modificadores_grau",
+            []
+        )
 
         if len(modificadores_grau) > 0:
 
@@ -604,16 +738,55 @@ def mostrar_relatorio():
 
             modificadores_texto = "Nenhum"
 
-        if resultado_findrisc is not None:
+        if findrisc_nao_aplicavel:
+            resumo_findrisc_relatorio = (
+                "Não aplicável — diabetes já diagnosticado"
+            )
+
+        elif findrisc_concluido:
             resumo_findrisc_relatorio = (
                 f"{resultado_findrisc['pontos']} pontos - "
                 f"{resultado_findrisc['classificacao']}"
             )
 
+        elif findrisc_insuficiente:
+            resumo_findrisc_relatorio = "Dados insuficientes"
+
         else:
-            resumo_findrisc_relatorio = (
-                "Não aplicável — diabetes já diagnosticado"
+            resumo_findrisc_relatorio = "Pendente"
+
+        if interheart_concluido:
+            resumo_interheart_relatorio = (
+                f"{resultado_interheart['pontos']} pontos - "
+                f"{resultado_interheart['classificacao']}"
             )
+
+        elif interheart_insuficiente:
+            resumo_interheart_relatorio = "Dados insuficientes"
+
+        else:
+            resumo_interheart_relatorio = "Pendente"
+
+        if periodontal_concluido:
+            estado_periodontal_relatorio = (
+                "Provisório" if periodontal_provisorio else "Concluído"
+            )
+            resumo_periodontal_relatorio = (
+                f"{estado_periodontal_relatorio} - "
+                f"{resultado_periodontal['classificacao_final']}"
+            )
+
+        elif periodontal_insuficiente:
+            resumo_periodontal_relatorio = "Dados insuficientes"
+
+        else:
+            resumo_periodontal_relatorio = "Pendente"
+
+        if pbl is not None:
+            resumo_radiografico_relatorio = f"{pbl:.2f}%"
+
+        else:
+            resumo_radiografico_relatorio = "Análise radiográfica não realizada"
 
         # Começamos pela identificação do caso
         texto_relatorio = (
@@ -621,8 +794,8 @@ def mostrar_relatorio():
             "\n"
             "IDENTIFICAÇÃO DO CASO\n"
             f"Código: {dados_caso['codigo']}\n"
-            f"Idade: {dados_caso['idade']}\n"
-            f"Sexo: {dados_caso['sexo']}\n"
+            f"Idade: {texto_valor(dados_caso['idade'], 'anos')}\n"
+            f"Sexo: {texto_valor(dados_caso['sexo'])}\n"
         )
 
 
@@ -631,74 +804,121 @@ def mostrar_relatorio():
             "\n"
             "RESUMO DOS RESULTADOS\n"
             f"Classificação periodontal: "
-            f"{resultado_periodontal['classificacao_final']}\n"
+            f"{resumo_periodontal_relatorio}\n"
             f"FINDRISC: {resumo_findrisc_relatorio}\n"
-            f"INTERHEART: {resultado_interheart['pontos']} pontos - "
-            f"{resultado_interheart['classificacao']}\n"
-            f"%PBL: {pbl}%\n"
+            f"INTERHEART: {resumo_interheart_relatorio}\n"
+            f"Análise radiográfica: {resumo_radiografico_relatorio}\n"
         )
 
-        texto_relatorio += (
-            "\n"
-            "ANÁLISE RADIOGRÁFICA\n"
-            f"%PBL máximo: {pbl}%\n"
-            f"Objeto/dente determinante: {dente_determinante}\n"
-            f"Superfície determinante: {superficie_determinante}\n"
-        )
+        if pbl is not None:
+            texto_relatorio += (
+                "\n"
+                "ANÁLISE RADIOGRÁFICA\n"
+                f"Status: Concluído\n"
+                f"%PBL máximo: {pbl:.2f}%\n"
+                f"Objeto/dente determinante: {dente_determinante}\n"
+                f"Superfície determinante: {superficie_determinante}\n"
+            )
+
+        else:
+            texto_relatorio += (
+                "\n"
+                "ANÁLISE RADIOGRÁFICA\n"
+                "Análise radiográfica não realizada.\n"
+            )
 
 
         # Classificação periodontal
+        extensao_relatorio = (
+            resultado_periodontal_relatorio.get("extensao_distribuicao")
+            or "Não determinada"
+        )
+
         texto_relatorio += (
             "\n"
             "CLASSIFICAÇÃO PERIODONTAL\n"
-            f"Estágio final: {resultado_periodontal['estagio']}\n"
+            f"Status: {estado_periodontal if periodontal_concluido else 'Dados insuficientes' if periodontal_insuficiente else 'Pendente'}\n"
+            f"Estágio final: "
+            f"{texto_valor(resultado_periodontal_relatorio.get('estagio'))}\n"
             f"Extensão/distribuição: "
-            f"{resultado_periodontal['extensao_distribuicao']}\n"
-            f"Grau final: {resultado_periodontal['grau']}\n"
+            f"{extensao_relatorio}\n"
+            f"Grau final: "
+            f"{texto_valor(resultado_periodontal_relatorio.get('grau'))}\n"
             f"Critério de severidade: "
-            f"{resultado_periodontal['criterio_severidade']}\n"
+            f"{texto_valor(resultado_periodontal_relatorio.get('criterio_severidade'))}\n"
             f"Critério do grau-base: "
-            f"{resultado_periodontal['criterio_grau_base']}\n"
+            f"{texto_valor(resultado_periodontal_relatorio.get('criterio_grau_base'))}\n"
             f"Fatores de complexidade: {fatores_texto}\n"
             f"Modificadores do grau: {modificadores_texto}\n"
         )
 
-        if resultado_periodontal["razao_pbl_idade"] is not None:
+        if resultado_periodontal_relatorio.get("razao_pbl_idade") is not None:
 
             texto_relatorio += (
                 f"Relação %PBL / idade: "
-                f"{resultado_periodontal['razao_pbl_idade']}\n"
+                f"{resultado_periodontal_relatorio['razao_pbl_idade']}\n"
             )
+
+        dados_ausentes_periodontal = resultado_periodontal_relatorio.get(
+            "dados_ausentes",
+            []
+        )
+
+        if len(dados_ausentes_periodontal) > 0:
+            texto_relatorio += "Dados ausentes:\n"
+
+            for dado in dados_ausentes_periodontal:
+                texto_relatorio += f"- {dado}\n"
 
 
         # FINDRISC
-        if resultado_findrisc is not None:
+        if findrisc_nao_aplicavel:
             texto_relatorio += (
                 "\n"
                 "FINDRISC\n"
+                "Status: Não aplicável\n"
+                "Diabetes já diagnosticado.\n"
+            )
+
+        elif findrisc_concluido:
+            texto_relatorio += (
+                "\n"
+                "FINDRISC\n"
+                "Status: Concluído\n"
                 f"Pontuação: {resultado_findrisc['pontos']}\n"
                 f"Classificação: {resultado_findrisc['classificacao']}\n"
                 f"Estimativa em 10 anos: "
                 f"{resultado_findrisc['estimativa']}\n"
             )
 
+        elif findrisc_insuficiente:
+            texto_relatorio += (
+                "\n"
+                "FINDRISC\n"
+                "Status: Dados insuficientes\n"
+                "Informações ausentes:\n"
+            )
+
+            for dado in resultado_findrisc.get("dados_ausentes", []):
+                texto_relatorio += f"- {dado}\n"
+
         else:
             texto_relatorio += (
                 "\n"
                 "FINDRISC\n"
-                "Não aplicável — diabetes já diagnosticado.\n"
+                "Status: Pendente\n"
             )
 
         texto_relatorio += (
             "\n"
             "DADOS CLÍNICOS UTILIZADOS\n"
-            f"Peso: {dados_clinicos['peso']} kg\n"
-            f"Altura: {dados_clinicos['altura']} m\n"
-            f"IMC: {dados_clinicos['imc']} kg/m²\n"
-            f"Cintura: {dados_clinicos['cintura']} cm\n"
-            f"Quadril: {dados_clinicos['quadril']} cm\n"
-            f"Diabetes: {dados_clinicos['diabetes']}\n"
-            f"Tabagismo: {dados_clinicos['tabagismo']}\n"
+            f"Peso: {texto_valor(dados_clinicos['peso'], 'kg')}\n"
+            f"Altura: {texto_valor(dados_clinicos['altura'], 'm')}\n"
+            f"IMC: {texto_valor(dados_clinicos['imc'], 'kg/m²')}\n"
+            f"Cintura: {texto_valor(dados_clinicos['cintura'], 'cm')}\n"
+            f"Quadril: {texto_valor(dados_clinicos['quadril'], 'cm')}\n"
+            f"Diabetes: {texto_valor(dados_clinicos['diabetes'])}\n"
+            f"Tabagismo: {texto_valor(dados_clinicos['tabagismo'])}\n"
         )
 
         if dados_clinicos["tabagismo"] in [
@@ -708,7 +928,7 @@ def mostrar_relatorio():
 
             texto_relatorio += (
                 f"Média de cigarros por dia: "
-                f"{dados_clinicos['cigarros_dia']}\n"
+                f"{texto_valor(dados_clinicos['cigarros_dia'])}\n"
             )
         
         if resultado_findrisc is not None:
@@ -716,34 +936,71 @@ def mostrar_relatorio():
                 "\n"
                 "DADOS UTILIZADOS NO FINDRISC\n"
                 f"Atividade física: "
-                f"{dados_findrisc['atividade_fisica']}\n"
+                f"{texto_valor(dados_findrisc['atividade_fisica'])}\n"
                 f"Frutas ou vegetais diariamente: "
-                f"{dados_findrisc['frutas_vegetais']}\n"
+                f"{texto_valor(dados_findrisc['frutas_vegetais'])}\n"
                 f"Medicamento para pressão alta: "
-                f"{dados_findrisc['medicacao_pressao']}\n"
+                f"{texto_valor(dados_findrisc['medicacao_pressao'])}\n"
                 f"Glicemia elevada: "
-                f"{dados_findrisc['glicemia_elevada']}\n"
+                f"{texto_valor(dados_findrisc['glicemia_elevada'])}\n"
                 f"Histórico familiar de diabetes: "
-                f"{dados_findrisc['historico_familiar']}\n"
+                f"{texto_valor(dados_findrisc['historico_familiar'])}\n"
             )
 
 
 
         # INTERHEART
-        texto_relatorio += (
-            "\n"
-            "INTERHEART\n"
-            f"Pontuação: {resultado_interheart['pontos']}\n"
-            f"Classificação: {resultado_interheart['classificacao']}\n"
-            f"Relação cintura-quadril: "
-            f"{resultado_interheart['rcq']}\n"
-        )
+        if interheart_concluido:
+            texto_relatorio += (
+                "\n"
+                "INTERHEART\n"
+                "Status: Concluído\n"
+                f"Pontuação: {resultado_interheart['pontos']}\n"
+                f"Classificação: {resultado_interheart['classificacao']}\n"
+                f"Relação cintura-quadril: "
+                f"{resultado_interheart['rcq']}\n"
+            )
+
+        elif interheart_insuficiente:
+            texto_relatorio += (
+                "\n"
+                "INTERHEART\n"
+                "Status: Dados insuficientes\n"
+            )
+
+            dados_ausentes_interheart = resultado_interheart.get(
+                "dados_ausentes",
+                []
+            )
+            dados_invalidos_interheart = resultado_interheart.get(
+                "dados_invalidos",
+                []
+            )
+
+            if len(dados_ausentes_interheart) > 0:
+                texto_relatorio += "Informações ausentes:\n"
+
+                for dado in dados_ausentes_interheart:
+                    texto_relatorio += f"- {dado}\n"
+
+            if len(dados_invalidos_interheart) > 0:
+                texto_relatorio += "Informações incompatíveis:\n"
+
+                for dado in dados_invalidos_interheart:
+                    texto_relatorio += f"- {dado}\n"
+
+        else:
+            texto_relatorio += (
+                "\n"
+                "INTERHEART\n"
+                "Status: Pendente\n"
+            )
 
         texto_relatorio += (
             "\n"
             "DADOS UTILIZADOS NA CLASSIFICAÇÃO PERIODONTAL\n"
             f"CAL máximo: {texto_valor(dados_periodontais['cal'], 'mm')}\n"
-            f"%PBL: {pbl}%\n"
+            f"%PBL: {texto_valor(pbl, '%')}\n"
             f"Dentes perdidos por periodontite: "
             f"{texto_valor(dados_periodontais['dentes_perdidos'])}\n"
             f"Profundidade máxima de sondagem: "
@@ -814,13 +1071,6 @@ def mostrar_relatorio():
             f"relatorio_{dados_caso['codigo']}.txt"
         )
 
-
-        st.download_button(
-            label="Baixar relatório",
-            data=texto_relatorio,
-            file_name=nome_arquivo,
-            mime="text/plain"
-        )
 
         # RELATÓRIO EM HTML
 
@@ -987,6 +1237,5 @@ def mostrar_relatorio():
     else:
 
         st.warning(
-            "O relatório final só poderá ser preparado "
-            "quando a avaliação estiver completa."
+            "Informe e salve o código do caso para preparar o relatório."
         )

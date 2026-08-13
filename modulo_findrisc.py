@@ -41,14 +41,14 @@ def mostrar_findrisc():
         )
 
     dados_anteriores = st.session_state["dados_findrisc"]
-    opcoes_sim_nao = ["Sim", "Não"]
+    opcoes_sim_nao = [None, "Sim", "Não"]
 
     with st.form("form_findrisc"):
         st.markdown("#### Perguntas específicas do FINDRISC")
         coluna_um, coluna_dois = st.columns(2)
 
         with coluna_um:
-            indice_atividade = None
+            indice_atividade = 0
 
             if dados_anteriores["atividade_fisica"] in opcoes_sim_nao:
                 indice_atividade = opcoes_sim_nao.index(
@@ -59,10 +59,11 @@ def mostrar_findrisc():
                 "Realiza pelo menos 30 minutos de atividade física por dia?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_atividade
+                index=indice_atividade,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
-            indice_frutas = None
+            indice_frutas = 0
 
             if dados_anteriores["frutas_vegetais"] in opcoes_sim_nao:
                 indice_frutas = opcoes_sim_nao.index(
@@ -73,10 +74,11 @@ def mostrar_findrisc():
                 "Consome frutas ou vegetais diariamente?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_frutas
+                index=indice_frutas,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
-            indice_pressao = None
+            indice_pressao = 0
 
             if dados_anteriores["medicacao_pressao"] in opcoes_sim_nao:
                 indice_pressao = opcoes_sim_nao.index(
@@ -87,11 +89,12 @@ def mostrar_findrisc():
                 "Já utilizou regularmente medicamento para pressão alta?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_pressao
+                index=indice_pressao,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
         with coluna_dois:
-            indice_glicemia = None
+            indice_glicemia = 0
 
             if dados_anteriores["glicemia_elevada"] in opcoes_sim_nao:
                 indice_glicemia = opcoes_sim_nao.index(
@@ -102,15 +105,17 @@ def mostrar_findrisc():
                 "Alguma vez foi identificada glicemia elevada?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_glicemia
+                index=indice_glicemia,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
             opcoes_historico = [
+                None,
                 "Nenhum familiar",
                 "Avós, tios ou primos",
                 "Pais, irmãos ou filhos"
             ]
-            indice_historico = None
+            indice_historico = 0
 
             if dados_anteriores["historico_familiar"] in opcoes_historico:
                 indice_historico = opcoes_historico.index(
@@ -121,7 +126,7 @@ def mostrar_findrisc():
                 "Histórico familiar de diabetes:",
                 opcoes_historico,
                 index=indice_historico,
-                placeholder="Selecione"
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
         calcular_findrisc = st.form_submit_button(
@@ -131,44 +136,64 @@ def mostrar_findrisc():
         )
 
     if calcular_findrisc:
+        st.session_state["dados_findrisc"]["atividade_fisica"] = atividade_fisica
+        st.session_state["dados_findrisc"]["frutas_vegetais"] = frutas_vegetais
+        st.session_state["dados_findrisc"]["medicacao_pressao"] = medicacao_pressao
+        st.session_state["dados_findrisc"]["glicemia_elevada"] = glicemia_elevada
+        st.session_state["dados_findrisc"]["historico_familiar"] = historico_familiar
+
+        # Como os dados utilizados no cálculo mudaram,
+        # o resultado anterior do FINDRISC deve ser recalculado
+        st.session_state["avaliacao"]["findrisc"] = None
+
+        dados_ausentes_findrisc = []
+
+        if diabetes is None:
+            dados_ausentes_findrisc.append("Situação de diabetes")
+
+        if idade is None:
+            dados_ausentes_findrisc.append("Idade")
+
+        if sexo is None:
+            dados_ausentes_findrisc.append("Sexo")
+
+        if imc is None:
+            dados_ausentes_findrisc.append("IMC")
+
+        if cintura is None:
+            dados_ausentes_findrisc.append("Circunferência da cintura")
 
         if atividade_fisica is None:
-            st.error("Informe a atividade física.")
+            dados_ausentes_findrisc.append("Atividade física")
 
-        elif frutas_vegetais is None:
-            st.error("Informe o consumo de frutas ou vegetais.")
+        if frutas_vegetais is None:
+            dados_ausentes_findrisc.append(
+                "Consumo diário de frutas ou vegetais"
+            )
 
-        elif medicacao_pressao is None:
-            st.error("Informe o uso de medicamento para pressão alta.")
+        if medicacao_pressao is None:
+            dados_ausentes_findrisc.append(
+                "Uso de medicamento para pressão alta"
+            )
 
-        elif glicemia_elevada is None:
-            st.error("Informe se já houve glicemia elevada.")
+        if glicemia_elevada is None:
+            dados_ausentes_findrisc.append("Histórico de glicemia elevada")
 
-        elif historico_familiar is None:
-            st.error("Informe o histórico familiar de diabetes.")
+        if historico_familiar is None:
+            dados_ausentes_findrisc.append("Histórico familiar de diabetes")
 
-        elif (
-            idade is None
-            or sexo is None
-            or imc is None
-            or cintura is None
-        ):
-            st.error(
-                "Preencha e salve os dados compartilhados do caso "
-                "antes de calcular o FINDRISC."
+        if len(dados_ausentes_findrisc) > 0:
+            st.session_state["avaliacao"]["findrisc"] = {
+                "status": "dados_insuficientes",
+                "dados_ausentes": dados_ausentes_findrisc
+            }
+
+            st.warning(
+                "Os dados informados foram salvos, mas ainda são "
+                "insuficientes para calcular o FINDRISC."
             )
 
         else:
-            st.session_state["dados_findrisc"]["atividade_fisica"] = atividade_fisica
-            st.session_state["dados_findrisc"]["frutas_vegetais"] = frutas_vegetais
-            st.session_state["dados_findrisc"]["medicacao_pressao"] = medicacao_pressao
-            st.session_state["dados_findrisc"]["glicemia_elevada"] = glicemia_elevada
-            st.session_state["dados_findrisc"]["historico_familiar"] = historico_familiar
-
-            # Como os dados utilizados no cálculo mudaram,
-            # o resultado anterior do FINDRISC deve ser recalculado
-            st.session_state["avaliacao"]["findrisc"] = None
-
             dados_findrisc = st.session_state["dados_findrisc"]
             pontos = 0
 
@@ -272,6 +297,7 @@ def mostrar_findrisc():
 
              # Salva o resultado da avaliação
             st.session_state["avaliacao"]["findrisc"] = {
+                "status": "concluido",
                 "pontos": pontos,
                 "classificacao": classificacao,
                 "estimativa": estimativa
@@ -282,7 +308,17 @@ def mostrar_findrisc():
     resultado_findrisc = st.session_state["avaliacao"]["findrisc"]
 
 
-    if resultado_findrisc is not None:
+    if (
+        resultado_findrisc is not None
+        and resultado_findrisc.get("status") == "dados_insuficientes"
+    ):
+        st.warning("Dados insuficientes para cálculo.")
+        st.markdown("**Informações ausentes:**")
+
+        for dado in resultado_findrisc.get("dados_ausentes", []):
+            st.write("-", dado)
+
+    elif resultado_findrisc is not None and "pontos" in resultado_findrisc:
         classe_resultado = "perio-result-card"
 
         if resultado_findrisc["classificacao"] in ["Alto", "Muito alto"]:

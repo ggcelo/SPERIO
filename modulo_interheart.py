@@ -36,15 +36,15 @@ def mostrar_interheart():
             st.metric("Relação cintura-quadril", "Pendente")
 
     dados_anteriores = st.session_state["dados_interheart"]
-    opcoes_sim_nao = ["Sim", "Não"]
+    opcoes_sim_nao = [None, "Sim", "Não"]
 
     with st.form("form_interheart"):
         st.markdown("#### Perguntas específicas do INTERHEART")
         coluna_um, coluna_dois = st.columns(2)
 
         with coluna_um:
-            opcoes_resposta = ["Sim", "Não", "Não sabe"]
-            indice_hipertensao = None
+            opcoes_resposta = [None, "Sim", "Não", "Não sabe"]
+            indice_hipertensao = 0
 
             if dados_anteriores["hipertensao"] in opcoes_resposta:
                 indice_hipertensao = opcoes_resposta.index(
@@ -55,10 +55,10 @@ def mostrar_interheart():
                 "Possui hipertensão/pressão alta diagnosticada?",
                 opcoes_resposta,
                 index=indice_hipertensao,
-                placeholder="Selecione"
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
-            indice_historico = None
+            indice_historico = 0
 
             if dados_anteriores["historico_parental_infarto"] in opcoes_resposta:
                 indice_historico = opcoes_resposta.index(
@@ -69,14 +69,15 @@ def mostrar_interheart():
                 "Pai ou mãe possui histórico de infarto?",
                 opcoes_resposta,
                 index=indice_historico,
-                placeholder="Selecione"
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
             opcoes_estresse = [
+                None,
                 "Nunca ou em alguns períodos",
                 "Vários períodos ou permanente"
             ]
-            indice_estresse = None
+            indice_estresse = 0
 
             if dados_anteriores["estresse"] in opcoes_estresse:
                 indice_estresse = opcoes_estresse.index(
@@ -87,10 +88,10 @@ def mostrar_interheart():
                 "Estresse no trabalho ou em casa:",
                 opcoes_estresse,
                 index=indice_estresse,
-                placeholder="Selecione"
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
-            indice_fumo_passivo = None
+            indice_fumo_passivo = 0
 
             if dados_anteriores["fumo_passivo"] in opcoes_sim_nao:
                 indice_fumo_passivo = opcoes_sim_nao.index(
@@ -101,14 +102,16 @@ def mostrar_interheart():
                 "Exposição ao fumo passivo por uma hora ou mais por semana?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_fumo_passivo
+                index=indice_fumo_passivo,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
             opcoes_atividade = [
+                None,
                 "Moderada ou intensa",
                 "Sedentário ou esforço mínimo"
             ]
-            indice_atividade = None
+            indice_atividade = 0
 
             if dados_anteriores["atividade_lazer"] in opcoes_atividade:
                 indice_atividade = opcoes_atividade.index(
@@ -119,10 +122,10 @@ def mostrar_interheart():
                 "Atividade física no lazer:",
                 opcoes_atividade,
                 index=indice_atividade,
-                placeholder="Selecione"
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
-            indice_tristeza = None
+            indice_tristeza = 0
 
             if dados_anteriores["tristeza_depressao"] in opcoes_sim_nao:
                 indice_tristeza = opcoes_sim_nao.index(
@@ -133,11 +136,12 @@ def mostrar_interheart():
                 "Tristeza ou depressão por duas semanas ou mais?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_tristeza
+                index=indice_tristeza,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
         with coluna_dois:
-            indice_salgado = None
+            indice_salgado = 0
 
             if dados_anteriores["alimento_salgado"] in opcoes_sim_nao:
                 indice_salgado = opcoes_sim_nao.index(
@@ -148,10 +152,11 @@ def mostrar_interheart():
                 "Consome alimentos salgados uma ou mais vezes ao dia?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_salgado
+                index=indice_salgado,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
-            indice_fritura = None
+            indice_fritura = 0
 
             if dados_anteriores["fritura_fast_food"] in opcoes_sim_nao:
                 indice_fritura = opcoes_sim_nao.index(
@@ -162,10 +167,11 @@ def mostrar_interheart():
                 "Consome fritura ou fast-food três ou mais vezes por semana?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_fritura
+                index=indice_fritura,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
-            indice_fruta = None
+            indice_fruta = 0
 
             if dados_anteriores["fruta_diaria"] in opcoes_sim_nao:
                 indice_fruta = opcoes_sim_nao.index(
@@ -176,10 +182,11 @@ def mostrar_interheart():
                 "Consome frutas diariamente?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_fruta
+                index=indice_fruta,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
-            indice_vegetais = None
+            indice_vegetais = 0
 
             if dados_anteriores["vegetais_diarios"] in opcoes_sim_nao:
                 indice_vegetais = opcoes_sim_nao.index(
@@ -190,10 +197,11 @@ def mostrar_interheart():
                 "Consome vegetais diariamente?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_vegetais
+                index=indice_vegetais,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
-            indice_carne = None
+            indice_carne = 0
 
             if dados_anteriores["carne_aves"] in opcoes_sim_nao:
                 indice_carne = opcoes_sim_nao.index(
@@ -204,7 +212,8 @@ def mostrar_interheart():
                 "Consome carne ou aves duas ou mais vezes ao dia?",
                 opcoes_sim_nao,
                 horizontal=True,
-                index=indice_carne
+                index=indice_carne,
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
         calcular_interheart = st.form_submit_button(
@@ -214,99 +223,109 @@ def mostrar_interheart():
         )
 
     if calcular_interheart:
+        st.session_state["dados_interheart"]["hipertensao"] = hipertensao
 
-        if hipertensao is None:
-            st.error("Informe a situação de hipertensão.")
+        st.session_state["dados_interheart"]["historico_parental_infarto"] = (
+            historico_parental_infarto
+        )
 
-        elif historico_parental_infarto is None:
-            st.error("Informe o histórico parental de infarto.")
+        st.session_state["dados_interheart"]["estresse"] = estresse
+        st.session_state["dados_interheart"]["fumo_passivo"] = fumo_passivo
 
-        elif estresse is None:
-            st.error("Informe a situação de estresse.")
+        st.session_state["dados_interheart"]["atividade_lazer"] = (
+            atividade_lazer
+        )
 
-        elif fumo_passivo is None:
-            st.error("Informe a exposição ao fumo passivo.")
+        st.session_state["dados_interheart"]["tristeza_depressao"] = (
+            tristeza_depressao
+        )
 
-        elif atividade_lazer is None:
-            st.error("Informe a atividade física no lazer.")
+        st.session_state["dados_interheart"]["alimento_salgado"] = (
+            alimento_salgado
+        )
 
-        elif tristeza_depressao is None:
-            st.error("Informe a situação de tristeza ou depressão.")
+        st.session_state["dados_interheart"]["fritura_fast_food"] = (
+            fritura_fast_food
+        )
 
-        elif alimento_salgado is None:
-            st.error("Informe o consumo de alimentos salgados.")
+        st.session_state["dados_interheart"]["fruta_diaria"] = fruta_diaria
 
-        elif fritura_fast_food is None:
-            st.error("Informe o consumo de fritura ou fast-food.")
+        st.session_state["dados_interheart"]["vegetais_diarios"] = (
+            vegetais_diarios
+        )
 
-        elif fruta_diaria is None:
-            st.error("Informe o consumo diário de frutas.")
+        st.session_state["dados_interheart"]["carne_aves"] = carne_aves
 
-        elif vegetais_diarios is None:
-            st.error("Informe o consumo diário de vegetais.")
+        # Como os dados utilizados no cálculo mudaram,
+        # o resultado anterior do INTERHEART deve ser recalculado
+        st.session_state["avaliacao"]["interheart"] = None
 
-        elif carne_aves is None:
-            st.error("Informe o consumo de carne ou aves.")
+        dados_ausentes_interheart = []
+        dados_invalidos_interheart = []
 
-        elif (
-            idade is None
-            or sexo is None
-            or cintura is None
-            or quadril is None
-            or diabetes is None
-            or tabagismo is None
-            or (
-                tabagismo in [
-                    "Fumante atual",
-                    "Ex-fumante há 12 meses ou menos"
-                ]
-                and cigarros_dia is None
-            )
+        campos_compartilhados = [
+            (idade, "Idade"),
+            (sexo, "Sexo"),
+            (cintura, "Circunferência da cintura"),
+            (quadril, "Circunferência do quadril"),
+            (diabetes, "Situação de diabetes"),
+            (tabagismo, "Situação de tabagismo")
+        ]
+
+        for valor, nome_campo in campos_compartilhados:
+            if valor is None:
+                dados_ausentes_interheart.append(nome_campo)
+
+        if tabagismo in [
+            "Fumante atual",
+            "Ex-fumante há 12 meses ou menos"
+        ]:
+            if cigarros_dia is None:
+                dados_ausentes_interheart.append("Média de cigarros por dia")
+
+            elif cigarros_dia == 0:
+                dados_invalidos_interheart.append(
+                    "Média de cigarros por dia incompatível com o tabagismo"
+                )
+
+        campos_especificos = [
+            (hipertensao, "Situação de hipertensão"),
+            (historico_parental_infarto, "Histórico parental de infarto"),
+            (estresse, "Situação de estresse"),
+            (fumo_passivo, "Exposição ao fumo passivo"),
+            (atividade_lazer, "Atividade física no lazer"),
+            (tristeza_depressao, "Tristeza ou depressão"),
+            (alimento_salgado, "Consumo de alimentos salgados"),
+            (fritura_fast_food, "Consumo de fritura ou fast-food"),
+            (fruta_diaria, "Consumo diário de frutas"),
+            (vegetais_diarios, "Consumo diário de vegetais"),
+            (carne_aves, "Consumo de carne ou aves")
+        ]
+
+        for valor, nome_campo in campos_especificos:
+            if valor is None:
+                dados_ausentes_interheart.append(nome_campo)
+
+        if (
+            len(dados_ausentes_interheart) > 0
+            or len(dados_invalidos_interheart) > 0
         ):
-            st.error(
-                "Preencha e salve os dados compartilhados do caso "
-                "antes de calcular o INTERHEART."
+            st.session_state["avaliacao"]["interheart"] = {
+                "status": "dados_insuficientes",
+                "dados_ausentes": dados_ausentes_interheart,
+                "dados_invalidos": dados_invalidos_interheart
+            }
+
+            st.warning(
+                "Os dados informados foram salvos, mas ainda são "
+                "insuficientes para calcular o INTERHEART."
             )
+
+            if len(dados_invalidos_interheart) > 0:
+                for dado in dados_invalidos_interheart:
+                    st.error(dado + ".")
 
         else:
-            st.session_state["dados_interheart"]["hipertensao"] = hipertensao
-
-            st.session_state["dados_interheart"]["historico_parental_infarto"] = (
-                historico_parental_infarto
-            )
-
-            st.session_state["dados_interheart"]["estresse"] = estresse
-            st.session_state["dados_interheart"]["fumo_passivo"] = fumo_passivo
-
-            st.session_state["dados_interheart"]["atividade_lazer"] = (
-                atividade_lazer
-            )
-
-            st.session_state["dados_interheart"]["tristeza_depressao"] = (
-                tristeza_depressao
-            )
-
-            st.session_state["dados_interheart"]["alimento_salgado"] = (
-                alimento_salgado
-            )
-
-            st.session_state["dados_interheart"]["fritura_fast_food"] = (
-                fritura_fast_food
-            )
-
-            st.session_state["dados_interheart"]["fruta_diaria"] = fruta_diaria
-
-            st.session_state["dados_interheart"]["vegetais_diarios"] = (
-                vegetais_diarios
-            )
-
-            st.session_state["dados_interheart"]["carne_aves"] = carne_aves
-
-
-            # Como os dados utilizados no cálculo mudaram,
-            # o resultado anterior do INTERHEART deve ser recalculado
-            st.session_state["avaliacao"]["interheart"] = None
-
             dados_interheart = st.session_state["dados_interheart"]
 
             # Calcula a relação cintura-quadril sem arredondar.
@@ -480,6 +499,7 @@ def mostrar_interheart():
 
             # Salva o resultado
             st.session_state["avaliacao"]["interheart"] = {
+                "status": "concluido",
                 "pontos": pontos_total,
                 "classificacao": classificacao,
                 "rcq": rcq,
@@ -492,7 +512,34 @@ def mostrar_interheart():
     resultado_interheart = st.session_state["avaliacao"]["interheart"]
 
 
-    if resultado_interheart is not None:
+    if (
+        resultado_interheart is not None
+        and resultado_interheart.get("status") == "dados_insuficientes"
+    ):
+        st.warning("Dados insuficientes para cálculo.")
+
+        dados_ausentes_interheart = resultado_interheart.get(
+            "dados_ausentes",
+            []
+        )
+        dados_invalidos_interheart = resultado_interheart.get(
+            "dados_invalidos",
+            []
+        )
+
+        if len(dados_ausentes_interheart) > 0:
+            st.markdown("**Informações ausentes:**")
+
+            for dado in dados_ausentes_interheart:
+                st.write("-", dado)
+
+        if len(dados_invalidos_interheart) > 0:
+            st.markdown("**Informações incompatíveis:**")
+
+            for dado in dados_invalidos_interheart:
+                st.write("-", dado)
+
+    elif resultado_interheart is not None and "pontos" in resultado_interheart:
         classe_resultado = "perio-result-card"
 
         if resultado_interheart["classificacao"] != "Baixo risco":

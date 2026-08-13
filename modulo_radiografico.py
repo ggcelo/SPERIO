@@ -256,10 +256,37 @@ def mostrar_modulo_radiografico():
     st.markdown("### 1. Seleção da radiografia")
     st.caption("Formatos aceitos: PNG, JPG ou JPEG.")
 
+    imagem_bytes_salva = st.session_state["dados_radiograficos"][
+        "imagem_bytes"
+    ]
+
+    nome_arquivo_salvo = st.session_state["dados_radiograficos"][
+        "nome_arquivo"
+    ]
+
+    rotulo_uploader = "Radiografia periapical:"
+
+    if imagem_bytes_salva is not None:
+        rotulo_uploader = "Carregar outra radiografia:"
+
     imagem_radiografica = st.file_uploader(
-        "Radiografia periapical:",
+        rotulo_uploader,
         type=["png", "jpg", "jpeg"]
     )
+
+    nova_imagem_enviada = imagem_radiografica is not None
+
+    # Se não foi enviada uma nova imagem,
+    # usamos a radiografia que já está salva no caso
+    if imagem_radiografica is None and imagem_bytes_salva is not None:
+        imagem_radiografica = BytesIO(imagem_bytes_salva)
+        imagem_radiografica.name = nome_arquivo_salvo
+
+    if (
+        imagem_radiografica is None
+        and imagem_bytes_salva is None
+    ):
+        st.info("Análise radiográfica não realizada.")
 
 
     if imagem_radiografica is not None:
@@ -273,7 +300,10 @@ def mostrar_modulo_radiografico():
 
         # Se foi enviada uma imagem diferente,
         # limpamos resultados da imagem anterior
-        if nome_novo_arquivo != nome_arquivo_anterior:
+        if (
+            nova_imagem_enviada
+            and nome_novo_arquivo != nome_arquivo_anterior
+        ):
 
             st.session_state["dados_radiograficos"][
                 "resultados_dentes"
@@ -305,16 +335,17 @@ def mostrar_modulo_radiografico():
             # anterior pode não ser mais válida
             st.session_state["avaliacao"]["periodontal"] = None
 
-        # Guarda o nome do arquivo
-        st.session_state["dados_radiograficos"][
-            "nome_arquivo"
-        ] = nome_novo_arquivo
+        if nova_imagem_enviada:
+            # Guarda o nome do arquivo
+            st.session_state["dados_radiograficos"][
+                "nome_arquivo"
+            ] = nome_novo_arquivo
 
 
-        # Guarda o conteúdo da imagem
-        st.session_state["dados_radiograficos"][
-            "imagem_bytes"
-        ] = imagem_radiografica.getvalue()
+            # Guarda o conteúdo da imagem
+            st.session_state["dados_radiograficos"][
+                "imagem_bytes"
+            ] = imagem_radiografica.getvalue()
 
 
         # Mostra a imagem
@@ -517,7 +548,7 @@ def mostrar_modulo_radiografico():
                                     pontos_objeto[nome] = (x,y)
 
                                    # Desenha o keypoint na radiografia
-                                    raio = 4
+                                    raio = 5
 
                                     desenho.ellipse(
                                         [

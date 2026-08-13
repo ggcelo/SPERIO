@@ -215,6 +215,10 @@ st.markdown(
             border-left-color: #c08a3f;
         }
 
+        .perio-status.is-warning {
+            border-left-color: #c08a3f;
+        }
+
         .perio-status__state {
             color: var(--perio-muted);
             font-size: .67rem;
@@ -440,32 +444,37 @@ dados_clinicos = st.session_state["dados_clinicos"]
 
 dados_caso_preenchidos = (
     dados_caso["codigo"] is not None
-    and dados_caso["idade"] is not None
-    and dados_caso["sexo"] is not None
 )
 
 dados_clinicos_preenchidos = (
-    dados_clinicos["peso"] is not None
-    and dados_clinicos["altura"] is not None
-    and dados_clinicos["cintura"] is not None
-    and dados_clinicos["quadril"] is not None
-    and dados_clinicos["diabetes"] is not None
-    and dados_clinicos["tabagismo"] is not None
+    dados_caso["codigo"] is not None
 )
 
 resultados_concluidos = 0
 
 if st.session_state["avaliacao"]["periodontal"] is not None:
-    if "classificacao_final" in st.session_state["avaliacao"]["periodontal"]:
+    if (
+        "classificacao_final" in st.session_state["avaliacao"]["periodontal"]
+        and not st.session_state["avaliacao"]["periodontal"].get(
+            "classificacao_provisoria",
+            False
+        )
+    ):
         resultados_concluidos += 1
 
-if st.session_state["avaliacao"]["findrisc"] is not None:
+if (
+    st.session_state["avaliacao"]["findrisc"] is not None
+    and "pontos" in st.session_state["avaliacao"]["findrisc"]
+):
     resultados_concluidos += 1
 
 elif dados_clinicos["diabetes"] == "Sim":
     resultados_concluidos += 1
 
-if st.session_state["avaliacao"]["interheart"] is not None:
+if (
+    st.session_state["avaliacao"]["interheart"] is not None
+    and "pontos" in st.session_state["avaliacao"]["interheart"]
+):
     resultados_concluidos += 1
 
 
@@ -568,12 +577,13 @@ with st.expander(
                 min_value=1,
                 max_value=120,
                 value=dados_caso["idade"],
-                step=1
+                step=1,
+                placeholder="Não informado"
             )
 
         with coluna_sexo:
-            opcoes_sexo = ["Feminino", "Masculino"]
-            indice_sexo = None
+            opcoes_sexo = [None, "Feminino", "Masculino"]
+            indice_sexo = 0
 
             if dados_caso["sexo"] in opcoes_sexo:
                 indice_sexo = opcoes_sexo.index(dados_caso["sexo"])
@@ -582,7 +592,7 @@ with st.expander(
                 "Sexo:",
                 opcoes_sexo,
                 index=indice_sexo,
-                placeholder="Selecione"
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
         st.markdown("#### Dados clínicos e antropométricos")
@@ -594,7 +604,8 @@ with st.expander(
                 min_value=1.0,
                 max_value=300.0,
                 value=dados_clinicos["peso"],
-                step=0.1
+                step=0.1,
+                placeholder="Não informado"
             )
 
             altura_digitada = st.number_input(
@@ -602,7 +613,8 @@ with st.expander(
                 min_value=0.5,
                 max_value=2.5,
                 value=dados_clinicos["altura"],
-                step=0.01
+                step=0.01,
+                placeholder="Não informado"
             )
 
             if peso_digitado is not None and altura_digitada is not None:
@@ -618,7 +630,8 @@ with st.expander(
                 min_value=20.0,
                 max_value=250.0,
                 value=dados_clinicos["cintura"],
-                step=0.1
+                step=0.1,
+                placeholder="Não informado"
             )
 
             quadril_digitado = st.number_input(
@@ -626,7 +639,8 @@ with st.expander(
                 min_value=20.0,
                 max_value=250.0,
                 value=dados_clinicos["quadril"],
-                step=0.1
+                step=0.1,
+                placeholder="Não informado"
             )
 
             if cintura_digitada is not None and quadril_digitado is not None:
@@ -636,8 +650,8 @@ with st.expander(
                 )
 
         with coluna_historico:
-            opcoes_diabetes = ["Sim", "Não", "Não sabe"]
-            indice_diabetes = None
+            opcoes_diabetes = [None, "Sim", "Não", "Não sabe"]
+            indice_diabetes = 0
 
             if dados_clinicos["diabetes"] in opcoes_diabetes:
                 indice_diabetes = opcoes_diabetes.index(
@@ -648,16 +662,17 @@ with st.expander(
                 "Possui diabetes diagnosticado?",
                 opcoes_diabetes,
                 index=indice_diabetes,
-                placeholder="Selecione"
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
             opcoes_tabagismo = [
+                None,
                 "Nunca fumou",
                 "Ex-fumante há mais de 12 meses",
                 "Ex-fumante há 12 meses ou menos",
                 "Fumante atual"
             ]
-            indice_tabagismo = None
+            indice_tabagismo = 0
 
             if dados_clinicos["tabagismo"] in opcoes_tabagismo:
                 indice_tabagismo = opcoes_tabagismo.index(
@@ -668,7 +683,7 @@ with st.expander(
                 "Situação de tabagismo:",
                 opcoes_tabagismo,
                 index=indice_tabagismo,
-                placeholder="Selecione"
+                format_func=lambda opcao: opcao or "Não informado"
             )
 
             cigarros_dia_digitado = st.number_input(
@@ -677,6 +692,7 @@ with st.expander(
                 max_value=100,
                 value=dados_clinicos["cigarros_dia"],
                 step=1,
+                placeholder="Não informado",
                 help=(
                     "Obrigatório para fumante atual ou ex-fumante há "
                     "12 meses ou menos."
@@ -696,47 +712,14 @@ if salvar_dados:
     if codigo_digitado.strip() == "": #evita a colocar "  "
         st.error("Digite o código do caso.")
 
-    elif idade_digitada is None:
-        st.error("Digite a idade.")
-
-    elif sexo_digitado is None:
-        st.error("Selecione o sexo.")
-
-    elif peso_digitado is None:
-        st.error("Digite o peso.")
-
-    elif altura_digitada is None:
-        st.error("Digite a altura.")
-
-    elif cintura_digitada is None:
-        st.error("Digite a circunferência da cintura.")
-
-    elif quadril_digitado is None:
-        st.error("Digite a circunferência do quadril.")
-
-    elif diabetes_digitado is None:
-        st.error("Informe a situação de diabetes.")
-
-    elif tabagismo_digitado is None:
-        st.error("Informe a situação de tabagismo.")
-
-    elif (
-        tabagismo_digitado in [
-            "Fumante atual",
-            "Ex-fumante há 12 meses ou menos"
-        ]
-        and (
-            cigarros_dia_digitado is None
-            or cigarros_dia_digitado == 0
-        )
-    ):
-        st.error(
-            "Informe uma média de cigarros por dia maior que zero."
-        )
-
     else:
         codigo_anterior = st.session_state["dados_caso"]["codigo"]
         novo_codigo = codigo_digitado.strip()
+
+        resultado_findrisc_anterior = st.session_state["avaliacao"]["findrisc"]
+        resultado_interheart_anterior = (
+            st.session_state["avaliacao"]["interheart"]
+        )
 
         novo_caso = (
             codigo_anterior is not None
@@ -751,10 +734,13 @@ if salvar_dados:
         st.session_state["dados_caso"]["idade"] = idade_digitada
         st.session_state["dados_caso"]["sexo"] = sexo_digitado
 
-        imc = round(
-            peso_digitado / (altura_digitada ** 2),
-            2
-        )
+        imc = None
+
+        if peso_digitado is not None and altura_digitada is not None:
+            imc = round(
+                peso_digitado / (altura_digitada ** 2),
+                2
+            )
 
         st.session_state["dados_clinicos"]["peso"] = peso_digitado
         st.session_state["dados_clinicos"]["altura"] = altura_digitada
@@ -764,17 +750,10 @@ if salvar_dados:
         st.session_state["dados_clinicos"]["diabetes"] = diabetes_digitado
         st.session_state["dados_clinicos"]["tabagismo"] = tabagismo_digitado
 
-        #só salvar cigarros/dia se for fumante atual ou nos últimos 12 meses
-        if tabagismo_digitado in [
-            "Fumante atual",
-            "Ex-fumante há 12 meses ou menos"
-        ]:
-            st.session_state["dados_clinicos"]["cigarros_dia"] = (
-                cigarros_dia_digitado
-            )
-
-        else:
-            st.session_state["dados_clinicos"]["cigarros_dia"] = None
+        # Salva o valor informado sem presumir ausência de consumo.
+        st.session_state["dados_clinicos"]["cigarros_dia"] = (
+            cigarros_dia_digitado
+        )
 
         # Como idade ou sexo podem ter mudado,
         # os resultados que dependem desses dados
@@ -785,6 +764,104 @@ if salvar_dados:
         st.session_state["avaliacao"]["findrisc"] = None
         st.session_state["avaliacao"]["interheart"] = None
         st.session_state["avaliacao"]["periodontal"] = None
+
+        # Se um escore já havia sido avaliado, a invalidação também registra
+        # quando os novos dados passaram a ser insuficientes.
+        if not novo_caso and resultado_findrisc_anterior is not None:
+            dados_ausentes_findrisc = []
+
+            if diabetes_digitado is None:
+                dados_ausentes_findrisc.append("Situação de diabetes")
+
+            if idade_digitada is None:
+                dados_ausentes_findrisc.append("Idade")
+
+            if sexo_digitado is None:
+                dados_ausentes_findrisc.append("Sexo")
+
+            if imc is None:
+                dados_ausentes_findrisc.append("IMC")
+
+            if cintura_digitada is None:
+                dados_ausentes_findrisc.append("Circunferência da cintura")
+
+            campos_findrisc = {
+                "atividade_fisica": "Atividade física",
+                "frutas_vegetais": "Consumo diário de frutas ou vegetais",
+                "medicacao_pressao": "Uso de medicamento para pressão alta",
+                "glicemia_elevada": "Histórico de glicemia elevada",
+                "historico_familiar": "Histórico familiar de diabetes"
+            }
+
+            for campo, nome_campo in campos_findrisc.items():
+                if st.session_state["dados_findrisc"][campo] is None:
+                    dados_ausentes_findrisc.append(nome_campo)
+
+            if (
+                diabetes_digitado != "Sim"
+                and len(dados_ausentes_findrisc) > 0
+            ):
+                st.session_state["avaliacao"]["findrisc"] = {
+                    "status": "dados_insuficientes",
+                    "dados_ausentes": dados_ausentes_findrisc
+                }
+
+        if not novo_caso and resultado_interheart_anterior is not None:
+            dados_ausentes_interheart = []
+            dados_invalidos_interheart = []
+
+            campos_compartilhados_interheart = [
+                (idade_digitada, "Idade"),
+                (sexo_digitado, "Sexo"),
+                (cintura_digitada, "Circunferência da cintura"),
+                (quadril_digitado, "Circunferência do quadril"),
+                (diabetes_digitado, "Situação de diabetes"),
+                (tabagismo_digitado, "Situação de tabagismo")
+            ]
+
+            for valor, nome_campo in campos_compartilhados_interheart:
+                if valor is None:
+                    dados_ausentes_interheart.append(nome_campo)
+
+            if tabagismo_digitado in [
+                "Fumante atual",
+                "Ex-fumante há 12 meses ou menos"
+            ]:
+                if cigarros_dia_digitado is None:
+                    dados_ausentes_interheart.append("Média de cigarros por dia")
+
+                elif cigarros_dia_digitado == 0:
+                    dados_invalidos_interheart.append(
+                        "Média de cigarros por dia incompatível com o tabagismo"
+                    )
+
+            campos_interheart = {
+                "hipertensao": "Situação de hipertensão",
+                "historico_parental_infarto": "Histórico parental de infarto",
+                "estresse": "Situação de estresse",
+                "fumo_passivo": "Exposição ao fumo passivo",
+                "atividade_lazer": "Atividade física no lazer",
+                "tristeza_depressao": "Tristeza ou depressão",
+                "alimento_salgado": "Consumo de alimentos salgados",
+                "fritura_fast_food": "Consumo de fritura ou fast-food",
+                "fruta_diaria": "Consumo diário de frutas",
+                "vegetais_diarios": "Consumo diário de vegetais",
+                "carne_aves": "Consumo de carne ou aves"
+            }
+
+            for campo, nome_campo in campos_interheart.items():
+                if st.session_state["dados_interheart"][campo] is None:
+                    dados_ausentes_interheart.append(nome_campo)
+
+            if (
+                len(dados_ausentes_interheart) > 0
+                or len(dados_invalidos_interheart) > 0
+            ):
+                st.session_state["avaliacao"]["interheart"] = {
+                    "status": "dados_insuficientes",
+                    "dados_ausentes": dados_ausentes_interheart,
+                    "dados_invalidos": dados_invalidos_interheart
+                }
 
         st.success("Dados compartilhados salvos. Escolha um módulo para continuar.")
 
@@ -807,32 +884,70 @@ if st.session_state["avaliacao"]["periodontal"] is not None:
         ]
         classe_periodontal = "perio-status is-complete"
 
+        if st.session_state["avaliacao"]["periodontal"].get(
+            "classificacao_provisoria",
+            False
+        ):
+            estado_periodontal = "Provisório"
+            classe_periodontal = "perio-status is-warning"
+
+    elif st.session_state["avaliacao"]["periodontal"].get("status") == (
+        "dados_insuficientes"
+    ):
+        estado_periodontal = "Dados insuficientes"
+        texto_periodontal = "Não foi possível concluir estágio e grau."
+        classe_periodontal = "perio-status is-warning"
+
 estado_findrisc = "Pendente"
 texto_findrisc = "Aguardando cálculo."
 classe_findrisc = "perio-status"
 
-if st.session_state["avaliacao"]["findrisc"] is not None:
+if st.session_state["dados_clinicos"]["diabetes"] == "Sim":
+    estado_findrisc = "Não aplicável"
+    texto_findrisc = "Diabetes já diagnosticado."
+    classe_findrisc = "perio-status is-na"
+
+elif (
+    st.session_state["avaliacao"]["findrisc"] is not None
+    and "pontos" in st.session_state["avaliacao"]["findrisc"]
+):
     estado_findrisc = "Concluído"
     texto_findrisc = st.session_state["avaliacao"]["findrisc"][
         "classificacao"
     ]
     classe_findrisc = "perio-status is-complete"
 
-elif st.session_state["dados_clinicos"]["diabetes"] == "Sim":
-    estado_findrisc = "Não aplicável"
-    texto_findrisc = "Diabetes já diagnosticado."
-    classe_findrisc = "perio-status is-na"
+elif (
+    st.session_state["avaliacao"]["findrisc"] is not None
+    and st.session_state["avaliacao"]["findrisc"].get("status")
+    == "dados_insuficientes"
+):
+    estado_findrisc = "Dados insuficientes"
+    texto_findrisc = "Preencha as informações indicadas no módulo."
+    classe_findrisc = "perio-status is-warning"
 
 estado_interheart = "Pendente"
 texto_interheart = "Aguardando cálculo."
 classe_interheart = "perio-status"
 
-if st.session_state["avaliacao"]["interheart"] is not None:
+if (
+    st.session_state["avaliacao"]["interheart"] is not None
+    and "pontos" in st.session_state["avaliacao"]["interheart"]
+):
     estado_interheart = "Concluído"
     texto_interheart = st.session_state["avaliacao"]["interheart"][
         "classificacao"
     ]
     classe_interheart = "perio-status is-complete"
+
+elif (
+    st.session_state["avaliacao"]["interheart"] is not None
+    and st.session_state["avaliacao"]["interheart"].get("status")
+    == "dados_insuficientes"
+):
+    estado_interheart = "Dados insuficientes"
+    texto_interheart = "Preencha as informações indicadas no módulo."
+    classe_interheart = "perio-status is-warning"
 
 coluna_periodontal, coluna_findrisc, coluna_interheart = st.columns(3)
 
