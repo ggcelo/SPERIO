@@ -13,8 +13,7 @@ from relatorio import mostrar_relatorio
 st.set_page_config(
     page_title="Apoio à Decisão em Periodontia",
     page_icon="🦷",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 
@@ -449,68 +448,6 @@ dados_caso_preenchidos = (
 dados_clinicos_preenchidos = (
     dados_caso["codigo"] is not None
 )
-
-resultados_concluidos = 0
-
-if st.session_state["avaliacao"]["periodontal"] is not None:
-    if (
-        "classificacao_final" in st.session_state["avaliacao"]["periodontal"]
-        and not st.session_state["avaliacao"]["periodontal"].get(
-            "classificacao_provisoria",
-            False
-        )
-    ):
-        resultados_concluidos += 1
-
-if (
-    st.session_state["avaliacao"]["findrisc"] is not None
-    and "pontos" in st.session_state["avaliacao"]["findrisc"]
-):
-    resultados_concluidos += 1
-
-elif dados_clinicos["diabetes"] == "Sim":
-    resultados_concluidos += 1
-
-if (
-    st.session_state["avaliacao"]["interheart"] is not None
-    and "pontos" in st.session_state["avaliacao"]["interheart"]
-):
-    resultados_concluidos += 1
-
-
-with st.sidebar:
-    st.markdown(
-        """
-        <div class="perio-brand">
-            <div class="perio-brand__mark">PD</div>
-            <div class="perio-brand__name">PerioDecision</div>
-            <div class="perio-brand__caption">Apoio clínico periodontal</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    codigo_sidebar = escape(str(dados_caso["codigo"] or "Ainda não definido"))
-
-    st.markdown(
-        f"""
-        <div class="perio-case">
-            <div class="perio-case__label">Caso em sessão</div>
-            <div class="perio-case__value">{codigo_sidebar}</div>
-            <div class="perio-brand__caption">
-                {resultados_concluidos} de 3 avaliações concluídas
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.progress(resultados_concluidos / 3)
-    st.caption(
-        "A radiografia é um apoio opcional. A interpretação e a decisão "
-        "clínica permanecem sob responsabilidade profissional."
-    )
-
 
 st.markdown(
     """
