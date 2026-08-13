@@ -441,13 +441,8 @@ inicializar_session_state()
 dados_caso = st.session_state["dados_caso"]
 dados_clinicos = st.session_state["dados_clinicos"]
 
-dados_caso_preenchidos = (
-    dados_caso["codigo"] is not None
-)
-
-dados_clinicos_preenchidos = (
-    dados_caso["codigo"] is not None
-)
+dados_caso_preenchidos = (dados_caso["codigo"] is not None) #recebe se o codigo do caso ja foi preenchido
+dados_clinicos_preenchidos = (dados_caso["codigo"] is not None)
 
 st.markdown(
     """
@@ -464,9 +459,9 @@ st.markdown(
 )
 
 
-if dados_caso_preenchidos and dados_clinicos_preenchidos:
-    classe_etapa_um = "perio-flow__step"
-    classe_etapa_dois = "perio-flow__step is-active"
+if dados_caso_preenchidos and dados_clinicos_preenchidos: #veirifica se o codigo do caso ja foi preenchido
+    classe_etapa_um = "perio-flow__step"                  #pro card que mostra a situação atual do fluxo atualizar
+    classe_etapa_dois = "perio-flow__step is-active"      #(somente detalhe visual)
 
 else:
     classe_etapa_um = "perio-flow__step is-active"
@@ -483,11 +478,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
-# MÓDULO RADIOGRÁFICO -> foi retirado daqui, movido tudo para o final da pagina
-
 with st.expander(
-    "1. Informações compartilhadas do caso",
+    "1. Informações compartilhadas do caso", #caso o codigo tenha sido informado, uma proxima interação ira fechar o expander
     expanded=not (dados_caso_preenchidos and dados_clinicos_preenchidos)
 ):
 
@@ -499,8 +491,8 @@ with st.expander(
     with st.form("form_dados_compartilhados"): #tudo dentro do with fica armazenado dentro do formulario
 
         st.markdown("#### Identificação segura")
-        coluna_codigo, coluna_idade, coluna_sexo = st.columns([1.5, 1, 1])
-
+        coluna_codigo, coluna_idade, coluna_sexo = st.columns([1.5, 1, 1]) #cria 3 colunas já com a largura especifica para cada uma 
+                                                                           #essas 3 colunas serão a largura dos inputs dentro do form
         with coluna_codigo:
             codigo_digitado = st.text_input(
                 "Código não identificável do caso:",
@@ -518,10 +510,10 @@ with st.expander(
                 placeholder="Não informado"
             )
 
-        with coluna_sexo:
-            opcoes_sexo = [None, "Feminino", "Masculino"]
-            indice_sexo = 0
-
+        with coluna_sexo:  
+            opcoes_sexo = [None, "Feminino", "Masculino"]   #usamos o conceito de indice nao só aqui, mas em todo
+            indice_sexo = 0                                 #input objetivo (marcar opcao), para que seja salvo a resposta
+                                                            #mesmo que o usuario va para outro modulo, o index manda qual opcao estará assinalada            
             if dados_caso["sexo"] in opcoes_sexo:
                 indice_sexo = opcoes_sexo.index(dados_caso["sexo"])
 
@@ -556,7 +548,7 @@ with st.expander(
 
             if peso_digitado is not None and altura_digitada is not None:
                 imc_previo = round(
-                    peso_digitado / (altura_digitada ** 2),
+                    peso_digitado / (altura_digitada ** 2), #salva esse imc previo apenas para mostrar, depois ele é apagado e imc é salvo no dicionario
                     2
                 )
                 st.caption(f"IMC calculado: {imc_previo} kg/m²")
@@ -566,7 +558,7 @@ with st.expander(
                 "Circunferência da cintura (cm):",
                 min_value=20.0,
                 max_value=250.0,
-                value=dados_clinicos["cintura"],
+                value=dados_clinicos["cintura"], # value nao salva nenhum valor, apenas mostra o ultimo salvo, como o index
                 step=0.1,
                 placeholder="Não informado"
             )
@@ -658,12 +650,12 @@ if salvar_dados:
             st.session_state["avaliacao"]["interheart"]
         )
 
-        novo_caso = (
+        novo_caso = (                   #testa se é um novo caso, compararando a semantica dos codigos
             codigo_anterior is not None
             and novo_codigo != codigo_anterior
         )
 
-        if novo_caso:
+        if novo_caso: #caso seja um novo codigo, limpa todo o session state e incializa-os novamente
             st.session_state.clear()
             inicializar_session_state()
 
@@ -671,13 +663,10 @@ if salvar_dados:
         st.session_state["dados_caso"]["idade"] = idade_digitada
         st.session_state["dados_caso"]["sexo"] = sexo_digitado
 
-        imc = None
+        imc = None #salva imc, e nao imc_previo
 
         if peso_digitado is not None and altura_digitada is not None:
-            imc = round(
-                peso_digitado / (altura_digitada ** 2),
-                2
-            )
+            imc = round(peso_digitado / (altura_digitada ** 2),2)
 
         st.session_state["dados_clinicos"]["peso"] = peso_digitado
         st.session_state["dados_clinicos"]["altura"] = altura_digitada
@@ -688,9 +677,7 @@ if salvar_dados:
         st.session_state["dados_clinicos"]["tabagismo"] = tabagismo_digitado
 
         # Salva o valor informado sem presumir ausência de consumo.
-        st.session_state["dados_clinicos"]["cigarros_dia"] = (
-            cigarros_dia_digitado
-        )
+        st.session_state["dados_clinicos"]["cigarros_dia"] = (cigarros_dia_digitado)
 
         # Como idade ou sexo podem ter mudado,
         # os resultados que dependem desses dados
@@ -816,9 +803,7 @@ classe_periodontal = "perio-status"
 if st.session_state["avaliacao"]["periodontal"] is not None:
     if "classificacao_final" in st.session_state["avaliacao"]["periodontal"]:
         estado_periodontal = "Concluído"
-        texto_periodontal = st.session_state["avaliacao"]["periodontal"][
-            "classificacao_final"
-        ]
+        texto_periodontal = st.session_state["avaliacao"]["periodontal"]["classificacao_final"]
         classe_periodontal = "perio-status is-complete"
 
         if st.session_state["avaliacao"]["periodontal"].get(
@@ -828,9 +813,7 @@ if st.session_state["avaliacao"]["periodontal"] is not None:
             estado_periodontal = "Provisório"
             classe_periodontal = "perio-status is-warning"
 
-    elif st.session_state["avaliacao"]["periodontal"].get("status") == (
-        "dados_insuficientes"
-    ):
+    elif st.session_state["avaliacao"]["periodontal"].get("status") == ("dados_insuficientes"):
         estado_periodontal = "Dados insuficientes"
         texto_periodontal = "Não foi possível concluir estágio e grau."
         classe_periodontal = "perio-status is-warning"
@@ -849,9 +832,7 @@ elif (
     and "pontos" in st.session_state["avaliacao"]["findrisc"]
 ):
     estado_findrisc = "Concluído"
-    texto_findrisc = st.session_state["avaliacao"]["findrisc"][
-        "classificacao"
-    ]
+    texto_findrisc = st.session_state["avaliacao"]["findrisc"]["classificacao"]
     classe_findrisc = "perio-status is-complete"
 
 elif (
@@ -872,9 +853,7 @@ if (
     and "pontos" in st.session_state["avaliacao"]["interheart"]
 ):
     estado_interheart = "Concluído"
-    texto_interheart = st.session_state["avaliacao"]["interheart"][
-        "classificacao"
-    ]
+    texto_interheart = st.session_state["avaliacao"]["interheart"]["classificacao"]
     classe_interheart = "perio-status is-complete"
 
 elif (
