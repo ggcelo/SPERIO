@@ -12,7 +12,7 @@ pasta_projeto = Path(__file__).parent
 caminho_modelo = (
     pasta_projeto
     / "models"
-    / "perio_kpt_7kpt_fold0_best.pt"
+    / "perio_kpt_oficial_fold0_best.pt"
 )
 
 CONFIANCA_POSE = 0.48
@@ -24,13 +24,29 @@ NOMES_KEYPOINTS = [
     "CEJ-d",
     "BL-d",
     "RL-d",
+    "RL-c",
+    "FA",
+    "FBL-m",
+    "FBL-d",
+    "ARR"
+]
+
+KEYPOINTS_DESENHAR = [
+    "CEJ-m",
+    "BL-m",
+    "RL-m",
+    "CEJ-d",
+    "BL-d",
+    "RL-d",
     "RL-c"
 ]
 
-CLASSES_RADICULARES = {
-    0: "Dente unirradicular",
-    1: "Dente birradicular",
-    2: "Dente trirradicular"
+CLASSES_PERIO_KPT = {
+    0: "Single Root",
+    1: "Double Root",
+    2: "Tripple Root",
+    3: "ARR",
+    4: "PLS"
 }
 
 REFERENCIAS_RADICULARES = {
@@ -495,6 +511,9 @@ def mostrar_modulo_radiografico():
 
                             classe_id = int(caixa_objeto[5])
 
+                            if classe_id not in [0, 1, 2]:
+                                continue
+
                             #PEGA OS PONTOS PARA DESNEHAR A CAIXA EM VOLTA DO DENTE
                             x1 = caixa_objeto[0]
                             y1 = caixa_objeto[1]
@@ -516,7 +535,7 @@ def mostrar_modulo_radiografico():
                                 fill="yellow"
                             )
 
-                            classe_radicular = CLASSES_RADICULARES.get( #usa o .get para ter um valor padrão ao encontrar um classe id que nao corresponda a nenhum listado
+                            classe_radicular = CLASSES_PERIO_KPT.get( #usa o .get para ter um valor padrão ao encontrar um classe id que nao corresponda a nenhum listado
                             classe_id,
                             "Classe desconhecida"
                             )
@@ -524,7 +543,7 @@ def mostrar_modulo_radiografico():
                             if len(keypoints_objeto) != len(NOMES_KEYPOINTS): #verifica se o numero de keypoints do objeto é igual ao numero de nomes de keypoints, se não for, mostra um aviso e continua para o proximo objeto
 
                                 st.warning(
-                                    "Este objeto não possui exatamente 7 keypoints."
+                                    "Este objeto não possui exatamente 11 keypoints."
                                 )
 
                                 continue
@@ -546,26 +565,26 @@ def mostrar_modulo_radiografico():
                                 else:
 
                                     pontos_objeto[nome] = (x,y)
+                                    if nome in KEYPOINTS_DESENHAR:
+                                    # Desenha o keypoint na radiografia
+                                        raio = 5
 
-                                   # Desenha o keypoint na radiografia
-                                    raio = 5
-
-                                    desenho.ellipse(
-                                        [
-                                            (x - raio, y - raio),
-                                            (x + raio, y + raio)
-                                        ],
-                                        fill="red",
-                                        outline="white"
-                                    )
+                                        desenho.ellipse(
+                                            [
+                                                (x - raio, y - raio),
+                                                (x + raio, y + raio)
+                                            ],
+                                            fill="red",
+                                            outline="white"
+                                        )
 
 
-                                    # Escreve o nome do keypoint
-                                    desenho.text(
-                                        (x + 6, y - 6),
-                                        nome,
-                                        fill="white"
-                                    )
+                                        # Escreve o nome do keypoint
+                                        desenho.text(
+                                            (x + 6, y - 6),
+                                            nome,
+                                            fill="white"
+                                        )
 
                             referencias_objeto = REFERENCIAS_RADICULARES.get(
                                 classe_id,
