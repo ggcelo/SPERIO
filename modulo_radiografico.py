@@ -49,180 +49,35 @@ CLASSES_PERIO_KPT = {
     4: "PLS"
 }
 
-REFERENCIAS_RADICULARES = {
-    0: ["RL-c"],
-    1: ["RL-m", "RL-d"],
-    2: ["RL-m", "RL-d", "RL-c"]
-}
-
-
-def calcular_eixo_dentario(pontos, classe_id): #FUNÇÃO PRA ACHAR O EIXO DO DENTE P/CALCULOS
-
-    cej_m = pontos["CEJ-m"]
-    cej_d = pontos["CEJ-d"]
-
-
-    # Para criar o eixo, precisamos das duas CEJs
-    if cej_m is None or cej_d is None:
-        return None
-
-
-    # Calcula o ponto médio entre CEJ-m e CEJ-d
-    centro_cervical = (
-        (cej_m[0] + cej_d[0]) / 2,
-        (cej_m[1] + cej_d[1]) / 2
-    )
-
-
-    # Dente unirradicular
-    if classe_id == 0:
-
-        referencia_apical = pontos["RL-c"]
-
-        fonte_referencia = "RL-c"
-
-
-    # Dente birradicular
-    elif classe_id == 1:
-
-        rl_m = pontos["RL-m"]
-        rl_d = pontos["RL-d"]
-
-
-        if rl_m is None or rl_d is None:
-            return None
-
-
-        referencia_apical = (
-            (rl_m[0] + rl_d[0]) / 2,
-            (rl_m[1] + rl_d[1]) / 2
-        )
-
-        fonte_referencia = "média de RL-m e RL-d"
-
-
-    # Dente trirradicular
-    elif classe_id == 2:
-
-        referencia_apical = pontos["RL-c"]
-
-        fonte_referencia = "RL-c"
-
-
-    else:
-
-        return None
-
-
-    if referencia_apical is None:
-        return None
-
-
-    # Diferença entre a referência apical
-    # e o centro cervical
-    delta_x = (
-        referencia_apical[0]
-        - centro_cervical[0]
-    )
-
-    delta_y = (
-        referencia_apical[1]
-        - centro_cervical[1]
-    )
-
-
-    # Comprimento do vetor
-    comprimento = hypot(
-        delta_x,
-        delta_y
-    )
-
-
-    if comprimento == 0:
-        return None
-
-
-    # Transforma o vetor em um vetor de comprimento 1
-    versor_x = delta_x / comprimento
-
-    versor_y = delta_y / comprimento
-
-
-    return {
-        "centro_cervical": centro_cervical,
-        "referencia_apical": referencia_apical,
-        "versor_x": versor_x,
-        "versor_y": versor_y,
-        "comprimento": comprimento,
-        "fonte_referencia_apical": fonte_referencia
-    }
-
-
-def projetar_no_eixo(ponto, eixo):
-
-    if ponto is None:
-        return None
-
-
-    centro_x, centro_y = eixo["centro_cervical"]
-
-    ponto_x, ponto_y = ponto
-
-
-    # Deslocamento entre o centro cervical
-    # e o ponto que queremos projetar
-    delta_x = ponto_x - centro_x
-
-    delta_y = ponto_y - centro_y
-
-
-    # Descobre quanto desse deslocamento
-    # acontece na direção do eixo do dente
-    posicao_no_eixo = (
-        delta_x * eixo["versor_x"]
-        + delta_y * eixo["versor_y"]
-    )
-
-
-    return posicao_no_eixo
-
-def calcular_distancia_projetada(posicao_origem, posicao_destino):
+def calcular_pbl(cej, bl, apice):
 
     if (
-        posicao_origem is None
-        or posicao_destino is None
+        cej is None
+        or bl is None
+        or apice is None
     ):
         return None
 
 
-    distancia = (
-        posicao_destino
-        - posicao_origem
+    distancia_cej_apice = hypot(
+        cej[0] - apice[0],
+        cej[1] - apice[1]
     )
 
 
-    return distancia
-
-def calcular_pbl(distancia_cej_bl, distancia_cej_rl):
-
-    if (
-        distancia_cej_bl is None
-        or distancia_cej_rl is None
-    ):
+    if distancia_cej_apice == 0:
         return None
 
 
-    if distancia_cej_rl <= 0:
-        return None
-
-
-    if distancia_cej_bl < 0:
-        return None
+    distancia_bl_apice = hypot(
+        bl[0] - apice[0],
+        bl[1] - apice[1]
+    )
 
 
     percentual_pbl = (
-        distancia_cej_bl
-        / distancia_cej_rl
+        (distancia_cej_apice - distancia_bl_apice)
+        / distancia_cej_apice
     ) * 100
 
 
@@ -586,71 +441,6 @@ def mostrar_modulo_radiografico():
                                             fill="white"
                                         )
 
-                            referencias_objeto = REFERENCIAS_RADICULARES.get(
-                                classe_id,
-                                []
-                            )
-
-                            for nome_referencia in referencias_objeto:
-
-                                ponto_referencia = pontos_objeto[
-                                    nome_referencia
-                                ]
-
-                            eixo_objeto = calcular_eixo_dentario(
-                            pontos_objeto,
-                            classe_id
-                            )
-
-
-                            if eixo_objeto is None:
-
-                                st.warning(
-                                    "Não foi possível construir o eixo dentário "
-                                    "deste objeto."
-                                )
-
-                                continue
-
-
-                            nomes_para_projetar = [
-                                "CEJ-m",
-                                "BL-m",
-                                "CEJ-d",
-                                "BL-d"
-                            ] + referencias_objeto #referencias_objeto recebe quais referencias radiculares 
-                                                   #serão usadas de acordo com o classe_id
-
-                            projecoes_objeto = {}
-
-
-                            for nome_ponto in nomes_para_projetar: #passa por cada nome ja verificando as referencias apicais necessarias
-                                                                   #fala que para nome, fazer a projeçao (chamar funçao)
-
-                                ponto = pontos_objeto[nome_ponto] #ponto_objeto é o dicionario que contem
-                                                                  #nome e coordenadas do dente (feito com o zip)
-                                                                  #estamos preparando 'ponto' para passa-lo como parametro
-                                                                  #ponto recebe SÓ a coordenada (x,y)
-
-                                posicao = projetar_no_eixo(
-                                    ponto,      
-                                    eixo_objeto #eixo_objeto é justamente o retorno da função que calcula o eixo 
-                                )               #contem o dicionario com coordenadas do centro, versores etc
-
-                                projecoes_objeto[nome_ponto] = posicao #recebe o retorno da função, que sera
-                                                                #um dicionário contendo nome do ponto + disntancia projetada
-
-
-                            #AGORA SIM VAMOS CALCULAR AS DISTANCIAS, DE ACORDO COM SUAS PROJEÇÕES NO EIXO
-                            distancia_cej_bl_mesial = calcular_distancia_projetada(
-                                projecoes_objeto["CEJ-m"],
-                                projecoes_objeto["BL-m"]
-                            )
-                            distancia_cej_bl_distal = calcular_distancia_projetada(
-                                projecoes_objeto["CEJ-d"],
-                                projecoes_objeto["BL-d"]
-                            )
-
                             # ESCOLHE A REFERÊNCIA RADICULAR DE CADA SUPERFÍCIE
 
                             if classe_id == 0:
@@ -693,31 +483,21 @@ def mostrar_modulo_radiografico():
 
                                 continue
 
-                            distancia_cej_rl_mesial = calcular_distancia_projetada(
-                                projecoes_objeto["CEJ-m"],
-                                projecoes_objeto[referencia_mesial]
-                            )
-
-
-                            distancia_cej_rl_distal = calcular_distancia_projetada(
-                                projecoes_objeto["CEJ-d"],
-                                projecoes_objeto[referencia_distal]
-                            )
-
-
                             # -------------------------
                             # CÁLCULO DO %PBL
                             # -------------------------
 
                             pbl_mesial = calcular_pbl(
-                                distancia_cej_bl_mesial,
-                                distancia_cej_rl_mesial
+                                pontos_objeto["CEJ-m"],
+                                pontos_objeto["BL-m"],
+                                pontos_objeto[referencia_mesial]
                             )
 
 
                             pbl_distal = calcular_pbl(
-                                distancia_cej_bl_distal,
-                                distancia_cej_rl_distal
+                                pontos_objeto["CEJ-d"],
+                                pontos_objeto["BL-d"],
+                                pontos_objeto[referencia_distal]
                             )
 
 
