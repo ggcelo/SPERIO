@@ -8,7 +8,7 @@ from modulo_findrisc import mostrar_findrisc
 from modulo_interheart import mostrar_interheart
 from modulo_periodontal import mostrar_modulo_periodontal
 from relatorio import mostrar_relatorio
-
+from validacao_simples import mostrar_validacao
 
 st.set_page_config(
     page_title="Apoio à Decisão em Periodontia",
@@ -437,6 +437,8 @@ st.markdown(
 # INICIALIZA OS DICIONÁRIOS DO SESSION_STATE
 inicializar_session_state()
 
+with st.expander("Validação técnica por planilha"):
+    mostrar_validacao()
 
 dados_caso = st.session_state["dados_caso"]
 dados_clinicos = st.session_state["dados_clinicos"]
@@ -658,6 +660,11 @@ if salvar_dados:
         if novo_caso: #caso seja um novo codigo, limpa todo o session state e incializa-os novamente
             st.session_state.clear()
             inicializar_session_state()
+            # Mantém somente o código do novo paciente.
+            st.session_state["dados_caso"]["codigo"] = novo_codigo
+
+            # Recarrega a página antes que os dados antigos do formulário sejam salvos.
+            st.rerun()
 
         st.session_state["dados_caso"]["codigo"] = novo_codigo
         st.session_state["dados_caso"]["idade"] = idade_digitada
