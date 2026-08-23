@@ -10,10 +10,7 @@ NOME_ABA = "Gabarito e validação"
 def ler_planilha(conteudo_planilha):
     """Lê a planilha e organiza os casos pelo código."""
 
-    planilha = load_workbook(
-        BytesIO(conteudo_planilha),
-        data_only=False
-    )
+    planilha = load_workbook(BytesIO(conteudo_planilha), data_only=False)
     aba = planilha[NOME_ABA]
     cabecalhos = {}
 
@@ -24,10 +21,7 @@ def ler_planilha(conteudo_planilha):
     casos = {}
 
     for numero_linha in range(2, aba.max_row + 1):
-        codigo = aba.cell(
-            numero_linha,
-            cabecalhos["id_caso"]
-        ).value
+        codigo = aba.cell(numero_linha, cabecalhos["id_caso"]).value
 
         if codigo is None:
             continue
@@ -36,10 +30,7 @@ def ler_planilha(conteudo_planilha):
         casos[codigo] = {}
 
         for nome_coluna, numero_coluna in cabecalhos.items():
-            casos[codigo][nome_coluna] = aba.cell(
-                numero_linha,
-                numero_coluna
-            ).value
+            casos[codigo][nome_coluna] = aba.cell(numero_linha, numero_coluna).value
 
     return casos
 
@@ -103,10 +94,7 @@ def importar_caso(caso):
     imc = None
 
     if caso["peso_kg"] is not None and caso["altura_m"] is not None:
-        imc = round(
-            caso["peso_kg"] / (caso["altura_m"] ** 2),
-            2
-        )
+        imc = round(caso["peso_kg"] / (caso["altura_m"] ** 2), 2)
 
     # Informações compartilhadas.
     st.session_state["dados_caso"] = {
@@ -214,9 +202,7 @@ def salvar_resultados(conteudo_planilha, codigo, observacao):
     if periodontal is None:
         return None, "A classificação periodontal ainda não foi executada."
 
-    if diabetes != "Sim" and (
-        findrisc is None or "pontos" not in findrisc
-    ):
+    if diabetes != "Sim" and (findrisc is None or "pontos" not in findrisc):
         return None, "O FINDRISC ainda não foi executado."
 
     if interheart is None:
@@ -251,10 +237,7 @@ def salvar_resultados(conteudo_planilha, codigo, observacao):
         pontos_interheart = "NC"
         classificacao_interheart = "NC"
 
-    planilha = load_workbook(
-        BytesIO(conteudo_planilha),
-        data_only=False
-    )
+    planilha = load_workbook(BytesIO(conteudo_planilha), data_only=False)
     aba = planilha[NOME_ABA]
     cabecalhos = {}
 
@@ -265,10 +248,7 @@ def salvar_resultados(conteudo_planilha, codigo, observacao):
     linha_do_caso = None
 
     for numero_linha in range(2, aba.max_row + 1):
-        codigo_da_linha = aba.cell(
-            numero_linha,
-            cabecalhos["id_caso"]
-        ).value
+        codigo_da_linha = aba.cell(numero_linha, cabecalhos["id_caso"]).value
 
         if str(codigo_da_linha).strip().upper() == codigo.upper():
             linha_do_caso = numero_linha
@@ -288,16 +268,9 @@ def salvar_resultados(conteudo_planilha, codigo, observacao):
     }
 
     for nome_coluna, valor in resultados.items():
-        aba.cell(
-            linha_do_caso,
-            cabecalhos[nome_coluna]
-        ).value = valor
+        aba.cell(linha_do_caso, cabecalhos[nome_coluna]).value = valor
 
-    aba.cell(
-        linha_do_caso,
-        cabecalhos["observacao"]
-    ).value = observacao or None
-
+    aba.cell(linha_do_caso, cabecalhos["observacao"]).value = observacao or None 
     arquivo_atualizado = BytesIO()
     planilha.save(arquivo_atualizado)
 
@@ -342,10 +315,7 @@ def mostrar_validacao():
         st.error("Não foi possível ler a planilha-gabarito.")
         return
 
-    codigo_digitado = st.text_input(
-        "Código do caso",
-        placeholder="Exemplo: C07"
-    ).strip().upper()
+    codigo_digitado = st.text_input("Código do caso", placeholder="Exemplo: C07").strip().upper()
 
     if st.button("Importar caso", type="primary", width="stretch"):
         if codigo_digitado == "":
@@ -374,10 +344,7 @@ def mostrar_validacao():
     codigo_atual = st.session_state["codigo_caso_validacao"]
     st.write(f"**Caso ativo:** {codigo_atual}")
 
-    observacao = st.text_input(
-        "Observação opcional",
-        key="observacao_validacao"
-    )
+    observacao = st.text_input("Observação opcional", key="observacao_validacao")
 
     if st.button("Registrar resultados na planilha", width="stretch"):
         arquivo_atualizado, erro = salvar_resultados(
@@ -391,9 +358,7 @@ def mostrar_validacao():
 
         else:
             st.session_state["planilha_validacao"] = arquivo_atualizado
-            st.success(
-                f"Resultados do caso {codigo_atual} registrados."
-            )
+            st.success(f"Resultados do caso {codigo_atual} registrados.")
 
     nome_original = st.session_state["nome_planilha_validacao"]
     nome_saida = nome_original.replace(".xlsx", "_resultados.xlsx")
@@ -402,9 +367,6 @@ def mostrar_validacao():
         "Baixar planilha com os resultados",
         data=st.session_state["planilha_validacao"],
         file_name=nome_saida,
-        mime=(
-            "application/vnd.openxmlformats-officedocument."
-            "spreadsheetml.sheet"
-        ),
+        mime=("application/vnd.openxmlformats-officedocument.""spreadsheetml.sheet"),
         width="stretch"
     )

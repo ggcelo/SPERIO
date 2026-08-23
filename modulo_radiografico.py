@@ -83,6 +83,23 @@ def calcular_pbl(cej, bl, apice):
 
     return percentual_pbl
 
+
+def desenhar_linhas_distancia(desenho, cej, bl, apice):
+
+    if cej is not None and apice is not None:
+        desenho.line(
+            [cej, apice],
+            fill="lime",
+            width=3
+        )
+
+    if bl is not None and apice is not None:
+        desenho.line(
+            [bl, apice],
+            fill="cyan",
+            width=3
+        )
+
 #CARREGA O MODELO E O SALVA NO CACHE DO STREAMLIT (doc recomenda)
 @st.cache_resource
 def carregar_modelo_radiografico(caminho):
@@ -102,11 +119,6 @@ def mostrar_modulo_radiografico():
         "Carregue uma radiografia periapical, execute o modelo perio-KPT e "
         "revise os resultados antes de continuar para a classificação "
         "periodontal."
-    )
-
-    st.warning(
-        "Uso experimental. Os valores de %PBL exigem revisão profissional "
-        "e devem ser interpretados em conjunto com os dados clínicos."
     )
 
     modelo_radiografico = None
@@ -249,6 +261,10 @@ def mostrar_modulo_radiografico():
                     imagem_anotada_atual,
                     caption="Detecções e keypoints do modelo",
                     width="stretch"
+                )
+
+                st.caption(
+                    "Linhas verdes: CEJ-ápice. Linhas azuis: BL-ápice."
                 )
 
         st.caption(
@@ -482,6 +498,20 @@ def mostrar_modulo_radiografico():
                                 )
 
                                 continue
+
+                            desenhar_linhas_distancia(
+                                desenho,
+                                pontos_objeto["CEJ-m"],
+                                pontos_objeto["BL-m"],
+                                pontos_objeto[referencia_mesial]
+                            )
+
+                            desenhar_linhas_distancia(
+                                desenho,
+                                pontos_objeto["CEJ-d"],
+                                pontos_objeto["BL-d"],
+                                pontos_objeto[referencia_distal]
+                            )
 
                             # -------------------------
                             # CÁLCULO DO %PBL

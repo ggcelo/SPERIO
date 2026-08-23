@@ -5,3 +5,4 @@ pyarrow==15.0.2
 torch==2.13.0
 torchvision==0.28.0
 ultralytics==8.2.102
+openpyxl==3.1.5

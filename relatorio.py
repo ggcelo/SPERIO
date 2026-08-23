@@ -1201,7 +1201,7 @@ def mostrar_relatorio():
 
                 <header class="cabecalho">
 
-                    <div class="etiqueta">PerioDecision</div>
+                    <div class="etiqueta">Software de apoio periodontal</div>
 
                     <h1>Relatório Integrado</h1>
 
