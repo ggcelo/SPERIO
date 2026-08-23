@@ -22,7 +22,8 @@ def inicializar_session_state():
             "dente_determinante": None,
             "superficie_determinante": None,
             "confirmado": False,
-            "imagem_anotada_bytes": None
+            "imagem_anotada_bytes": None,
+            "pbl_calculado": False
         }
     #DICIONÁRIO DOS DADOS DO CASO
 

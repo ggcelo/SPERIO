@@ -187,7 +187,8 @@ def importar_caso(caso):
             "Valor da planilha" if pbl is not None else None
         ),
         "confirmado": pbl is not None,
-        "imagem_anotada_bytes": None
+        "imagem_anotada_bytes": None,
+        "pbl_calculado": pbl is not None
     }
 
 
@@ -271,6 +272,171 @@ def salvar_resultados(conteudo_planilha, codigo, observacao):
         aba.cell(linha_do_caso, cabecalhos[nome_coluna]).value = valor
 
     aba.cell(linha_do_caso, cabecalhos["observacao"]).value = observacao or None 
+    arquivo_atualizado = BytesIO()
+    planilha.save(arquivo_atualizado)
+
+    return arquivo_atualizado.getvalue(), None
+
+
+def montar_dados_paciente_exportacao():
+    """Reúne os dados do paciente usando os cabeçalhos do gabarito."""
+
+    dados_caso = st.session_state["dados_caso"]
+    dados_clinicos = st.session_state["dados_clinicos"]
+    dados_findrisc = st.session_state["dados_findrisc"]
+    dados_interheart = st.session_state["dados_interheart"]
+    dados_periodontais = st.session_state["dados_periodontais"]
+    avaliacao = st.session_state["avaliacao"]
+
+    resultado_periodontal = avaliacao["periodontal"] or {}
+    resultado_findrisc = avaliacao["findrisc"] or {}
+    resultado_interheart = avaliacao["interheart"] or {}
+
+    extensao = resultado_periodontal.get("extensao_distribuicao")
+
+    if extensao == "Padrão molar/incisivo":
+        extensao = "padrão molar-incisivo"
+    elif extensao is not None:
+        extensao = extensao.lower()
+
+    pontos_findrisc = resultado_findrisc.get("pontos")
+    classificacao_findrisc = resultado_findrisc.get("classificacao")
+
+    if dados_clinicos["diabetes"] == "Sim":
+        pontos_findrisc = "NA"
+        classificacao_findrisc = "Não aplicável"
+
+    dados_paciente = {
+        "id_caso": dados_caso["codigo"],
+        "idade_anos": dados_caso["idade"],
+        "sexo": dados_caso["sexo"],
+        "peso_kg": dados_clinicos["peso"],
+        "altura_m": dados_clinicos["altura"],
+        "cintura_cm": dados_clinicos["cintura"],
+        "quadril_cm": dados_clinicos["quadril"],
+        "diabetes_diagnosticado": dados_clinicos["diabetes"],
+        "tabagismo": dados_clinicos["tabagismo"],
+        "cigarros_dia": dados_clinicos["cigarros_dia"],
+        "atividade_30min_dia": dados_findrisc["atividade_fisica"],
+        "frutas_vegetais_diarios": dados_findrisc["frutas_vegetais"],
+        "uso_medicamento_pressao": dados_findrisc["medicacao_pressao"],
+        "glicemia_elevada_previa": dados_findrisc["glicemia_elevada"],
+        "historico_familiar_diabetes": dados_findrisc[
+            "historico_familiar"
+        ],
+        "hipertensao_diagnosticada": dados_interheart["hipertensao"],
+        "historico_parental_infarto": dados_interheart[
+            "historico_parental_infarto"
+        ],
+        "estresse": dados_interheart["estresse"],
+        "fumo_passivo_1h_semana": dados_interheart["fumo_passivo"],
+        "atividade_fisica_lazer": dados_interheart["atividade_lazer"],
+        "tristeza_depressao_2_semanas": dados_interheart[
+            "tristeza_depressao"
+        ],
+        "alimento_salgado_diario": dados_interheart["alimento_salgado"],
+        "fritura_fast_food_3x_semana": dados_interheart[
+            "fritura_fast_food"
+        ],
+        "fruta_diaria": dados_interheart["fruta_diaria"],
+        "vegetais_diarios": dados_interheart["vegetais_diarios"],
+        "carne_aves_2x_dia": dados_interheart["carne_aves"],
+        "pbl_max_pct": avaliacao["pbl"],
+        "cal_max_mm": dados_periodontais["cal"],
+        "dentes_perdidos_periodontite": dados_periodontais[
+            "dentes_perdidos"
+        ],
+        "sondagem_max_mm": dados_periodontais["sondagem"],
+        "perda_ossea_vertical_max_mm": dados_periodontais["perda_vertical"],
+        "furca": dados_periodontais["furca"],
+        "defeito_rebordo": dados_periodontais["defeito_rebordo"],
+        "disfuncao_mastigatoria": dados_periodontais[
+            "disfuncao_mastigatoria"
+        ],
+        "mobilidade": dados_periodontais["mobilidade"],
+        "dentes_remanescentes": dados_periodontais["dentes_remanescentes"],
+        "colapso_mordida": dados_periodontais["colapso_mordida"],
+        "migracao_dentaria": dados_periodontais["migracao_dentaria"],
+        "abertura_leque": dados_periodontais["abertura_leque"],
+        "percentual_dentes_envolvidos": dados_periodontais[
+            "percentual_dentes_envolvidos"
+        ],
+        "padrao_molar_incisivo": dados_periodontais[
+            "padrao_molar_incisivo"
+        ],
+        "progressao_5_anos_mm": dados_periodontais["progressao_5_anos"],
+        "fenotipo_biofilme": dados_periodontais["fenotipo"],
+        "hba1c_pct": dados_periodontais["hba1c"],
+        "estagio_software": resultado_periodontal.get("estagio"),
+        "extensao_software": extensao,
+        "grau_software": resultado_periodontal.get("grau"),
+        "findrisc_pontos_software": pontos_findrisc,
+        "findrisc_classificacao_software": classificacao_findrisc,
+        "interheart_pontos_software": resultado_interheart.get("pontos"),
+        "interheart_classificacao_software": resultado_interheart.get(
+            "classificacao"
+        ),
+        "observacao": None
+    }
+
+    return dados_paciente
+
+
+def adicionar_paciente_planilha(conteudo_planilha):
+    """Acrescenta o paciente atual ao final da planilha-gabarito."""
+
+    try:
+        planilha = load_workbook(
+            BytesIO(conteudo_planilha),
+            data_only=False
+        )
+    except Exception:
+        return None, "Não foi possível abrir a planilha."
+
+    if NOME_ABA not in planilha.sheetnames:
+        return None, f'A aba "{NOME_ABA}" não foi encontrada.'
+
+    aba = planilha[NOME_ABA]
+    cabecalhos = [celula.value for celula in aba[1]]
+    dados_paciente = montar_dados_paciente_exportacao()
+
+    cabecalhos_ausentes = [
+        nome_coluna
+        for nome_coluna in dados_paciente
+        if nome_coluna not in cabecalhos
+    ]
+
+    if len(cabecalhos_ausentes) > 0:
+        return (
+            None,
+            "A planilha não possui todos os cabeçalhos esperados: "
+            + ", ".join(cabecalhos_ausentes)
+        )
+
+    codigo = dados_paciente["id_caso"]
+
+    if codigo is None or str(codigo).strip() == "":
+        return None, "Informe e salve o código do caso antes de exportar."
+
+    coluna_codigo = cabecalhos.index("id_caso") + 1
+
+    for numero_linha in range(2, aba.max_row + 1):
+        codigo_existente = aba.cell(numero_linha, coluna_codigo).value
+
+        if (
+            codigo_existente is not None
+            and str(codigo_existente).strip().upper()
+            == str(codigo).strip().upper()
+        ):
+            return None, f"O caso {codigo} já existe na planilha."
+
+    nova_linha = [
+        dados_paciente.get(nome_coluna)
+        for nome_coluna in cabecalhos
+    ]
+
+    aba.append(nova_linha)
+
     arquivo_atualizado = BytesIO()
     planilha.save(arquivo_atualizado)
 

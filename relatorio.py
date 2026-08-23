@@ -2,6 +2,8 @@ import streamlit as st
 from html import escape
 from datetime import datetime
 
+from validacao_simples import adicionar_paciente_planilha
+
 
 def mostrar_relatorio():
     st.header("Relatório integrado")
@@ -1225,13 +1227,70 @@ def mostrar_relatorio():
         )
 
 
-        # Botão de download
-        st.download_button(
-            label="Baixar relatório para impressão",
-            data=html_relatorio,
-            file_name=nome_arquivo_html,
-            mime="text/html"
-        )
+        # Botões de download e exportação
+        coluna_relatorio, coluna_planilha = st.columns(2)
+
+        with coluna_relatorio:
+            st.download_button(
+                label="Baixar relatório para impressão",
+                data=html_relatorio,
+                file_name=nome_arquivo_html,
+                mime="text/html",
+                width="stretch"
+            )
+
+        with coluna_planilha:
+            if st.button(
+                "Exportar para planilha",
+                width="stretch"
+            ):
+                st.session_state["mostrar_exportacao_planilha"] = True
+
+        if st.session_state.get("mostrar_exportacao_planilha", False):
+            st.markdown("#### Exportar paciente para a planilha")
+            st.caption(
+                "Carregue uma planilha com a mesma estrutura da "
+                "planilha-gabarito. O paciente atual será acrescentado "
+                "em uma nova linha."
+            )
+
+            arquivo_planilha = st.file_uploader(
+                "Planilha de destino (.xlsx)",
+                type=["xlsx"],
+                key="planilha_exportacao_relatorio"
+            )
+
+            if arquivo_planilha is not None:
+                planilha_atualizada, erro_exportacao = (
+                    adicionar_paciente_planilha(
+                        arquivo_planilha.getvalue()
+                    )
+                )
+
+                if erro_exportacao is not None:
+                    st.warning(erro_exportacao)
+
+                else:
+                    nome_base = arquivo_planilha.name.rsplit(".", 1)[0]
+                    nome_saida_planilha = (
+                        f"{nome_base}_com_{dados_caso['codigo']}.xlsx"
+                    )
+
+                    st.success(
+                        f"Caso {dados_caso['codigo']} acrescentado "
+                        "à planilha."
+                    )
+
+                    st.download_button(
+                        "Baixar planilha atualizada",
+                        data=planilha_atualizada,
+                        file_name=nome_saida_planilha,
+                        mime=(
+                            "application/vnd.openxmlformats-officedocument."
+                            "spreadsheetml.sheet"
+                        ),
+                        width="stretch"
+                    )
 
 
     else:
