@@ -485,11 +485,7 @@ with st.expander(
     expanded=not (dados_caso_preenchidos and dados_clinicos_preenchidos)
 ):
 
-    st.caption(
-        "Preencha estes dados uma única vez. Eles serão reutilizados apenas "
-        "pelos módulos que dependem deles."
-    )
-
+    
     with st.form("form_dados_compartilhados"): #tudo dentro do with fica armazenado dentro do formulario
 
         st.markdown("#### Identificação segura")
@@ -624,17 +620,37 @@ with st.expander(
                 value=dados_clinicos["cigarros_dia"],
                 step=1,
                 placeholder="Não informado",
-                help=(
-                    "Obrigatório para fumante atual ou ex-fumante há "
-                    "12 meses ou menos."
-                )
+                
             )
 
-        salvar_dados = st.form_submit_button(
-            "Salvar dados compartilhados e continuar",
-            type="primary",
-            width="stretch"
-        )
+        coluna_salvar, coluna_limpar = st.columns(2)
+
+        with coluna_salvar:
+            salvar_dados = st.form_submit_button(
+                "Salvar dados compartilhados e continuar",
+                type="primary",
+                width="stretch"
+            )
+
+        with coluna_limpar:
+            limpar_dados = st.form_submit_button(
+                "Limpar dados e iniciar nova avaliação",
+                width="stretch"
+            )
+
+
+# A limpeza completa acontece somente quando o usuário pede.
+if limpar_dados:
+    st.session_state.clear()
+    inicializar_session_state()
+    st.session_state["mensagem_limpeza"] = (
+        "Dados apagados. Uma nova avaliação pode ser iniciada."
+    )
+    st.rerun()
+
+
+if "mensagem_limpeza" in st.session_state:
+    st.success(st.session_state.pop("mensagem_limpeza"))
 
 
 #coloca todos os dados do formulario dentro do dados_caso
@@ -644,7 +660,6 @@ if salvar_dados:
         st.error("Digite o código do caso.")
 
     else:
-        codigo_anterior = st.session_state["dados_caso"]["codigo"]
         novo_codigo = codigo_digitado.strip()
 
         resultado_findrisc_anterior = st.session_state["avaliacao"]["findrisc"]
@@ -652,19 +667,20 @@ if salvar_dados:
             st.session_state["avaliacao"]["interheart"]
         )
 
-        novo_caso = (                   #testa se é um novo caso, compararando a semantica dos codigos
-            codigo_anterior is not None
-            and novo_codigo != codigo_anterior
+        dados_compartilhados_alterados = (
+            idade_digitada != st.session_state["dados_caso"]["idade"]
+            or sexo_digitado != st.session_state["dados_caso"]["sexo"]
+            or peso_digitado != st.session_state["dados_clinicos"]["peso"]
+            or altura_digitada != st.session_state["dados_clinicos"]["altura"]
+            or cintura_digitada != st.session_state["dados_clinicos"]["cintura"]
+            or quadril_digitado != st.session_state["dados_clinicos"]["quadril"]
+            or diabetes_digitado
+            != st.session_state["dados_clinicos"]["diabetes"]
+            or tabagismo_digitado
+            != st.session_state["dados_clinicos"]["tabagismo"]
+            or cigarros_dia_digitado
+            != st.session_state["dados_clinicos"]["cigarros_dia"]
         )
-
-        if novo_caso: #caso seja um novo codigo, limpa todo o session state e incializa-os novamente
-            st.session_state.clear()
-            inicializar_session_state()
-            # Mantém somente o código do novo paciente.
-            st.session_state["dados_caso"]["codigo"] = novo_codigo
-
-            # Recarrega a página antes que os dados antigos do formulário sejam salvos.
-            st.rerun()
 
         st.session_state["dados_caso"]["codigo"] = novo_codigo
         st.session_state["dados_caso"]["idade"] = idade_digitada
@@ -692,13 +708,17 @@ if salvar_dados:
         #os dados clínicos compartilhados são utilizados
         #por diferentes módulos. Por isso, resultados
         #anteriores precisam ser recalculados.
-        st.session_state["avaliacao"]["findrisc"] = None
-        st.session_state["avaliacao"]["interheart"] = None
-        st.session_state["avaliacao"]["periodontal"] = None
+        if dados_compartilhados_alterados:
+            st.session_state["avaliacao"]["findrisc"] = None
+            st.session_state["avaliacao"]["interheart"] = None
+            st.session_state["avaliacao"]["periodontal"] = None
 
         # Se um escore já havia sido avaliado, a invalidação também registra
         # quando os novos dados passaram a ser insuficientes.
-        if not novo_caso and resultado_findrisc_anterior is not None:
+        if (
+            dados_compartilhados_alterados
+            and resultado_findrisc_anterior is not None
+        ):
             dados_ausentes_findrisc = []
 
             if diabetes_digitado is None:
@@ -737,7 +757,10 @@ if salvar_dados:
                     "dados_ausentes": dados_ausentes_findrisc
                 }
 
-        if not novo_caso and resultado_interheart_anterior is not None:
+        if (
+            dados_compartilhados_alterados
+            and resultado_interheart_anterior is not None
+        ):
             dados_ausentes_interheart = []
             dados_invalidos_interheart = []
 
@@ -798,10 +821,7 @@ if salvar_dados:
 
 
 st.markdown("## Estado da avaliação")
-st.caption(
-    "Os resultados permanecem disponíveis durante a sessão e são invalidados "
-    "quando uma entrada relevante é alterada."
-)
+
 
 estado_periodontal = "Pendente"
 texto_periodontal = "Aguardando classificação."
@@ -911,10 +931,7 @@ for coluna, classe, estado, titulo, texto_estado in [
 
 
 st.markdown("## Área de trabalho")
-st.caption(
-    "Escolha um módulo. Os dados compartilhados e os demais resultados "
-    "permanecem preservados."
-)
+
 
 opcoes_modulos = [
     "Análise radiográfica",

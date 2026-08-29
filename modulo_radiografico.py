@@ -267,7 +267,7 @@ def carregar_modelo_radiografico(caminho):
 
 
 def mostrar_modulo_radiografico():
-    st.header("Análise radiográfica experimental")
+    st.header("Análise radiográfica")
 
     st.write(
         "Carregue uma radiografia periapical, execute o modelo perio-KPT e "
@@ -288,7 +288,6 @@ def mostrar_modulo_radiografico():
         st.write("Caminho esperado:", str(caminho_modelo))
 
     st.markdown("### 1. Seleção da radiografia")
-    st.caption("Formatos aceitos: PNG, JPG ou JPEG.")
 
     imagem_bytes_salva = dados_radiograficos["imagem_bytes"]
     nome_arquivo_salvo = dados_radiograficos["nome_arquivo"]
@@ -310,7 +309,6 @@ def mostrar_modulo_radiografico():
         imagem_radiografica.name = nome_arquivo_salvo
 
     if imagem_radiografica is None and imagem_bytes_salva is None:
-        st.info("Análise radiográfica não realizada.")
         return
 
     nome_novo_arquivo = imagem_radiografica.name
