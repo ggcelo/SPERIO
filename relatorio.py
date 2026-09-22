@@ -2,7 +2,7 @@ import streamlit as st
 from html import escape
 from datetime import datetime
 
-from validacao_simples import adicionar_paciente_planilha
+from planilhas import adicionar_paciente_planilha
 
 
 def mostrar_relatorio():

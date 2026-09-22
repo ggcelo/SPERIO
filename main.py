@@ -8,7 +8,7 @@ from modulo_findrisc import mostrar_findrisc
 from modulo_interheart import mostrar_interheart
 from modulo_periodontal import mostrar_modulo_periodontal
 from relatorio import mostrar_relatorio
-from validacao_simples import mostrar_validacao
+from planilhas import mostrar_validacao
 
 st.set_page_config(
     page_title="Apoio à Decisão em Periodontia",
@@ -931,8 +931,6 @@ for coluna, classe, estado, titulo, texto_estado in [
 
 
 st.markdown("## Área de trabalho")
-
-
 opcoes_modulos = [
     "Análise radiográfica",
     "Classificação periodontal",
@@ -940,7 +938,6 @@ opcoes_modulos = [
     "INTERHEART",
     "Relatório"
 ]
-
 modulo = st.radio(
     "Módulo em edição",
     opcoes_modulos,
@@ -948,10 +945,7 @@ modulo = st.radio(
     key="modulo_navegacao"
 )
 
-
-# -------------------------
 # EXIBIÇÃO DOS MÓDULOS
-# -------------------------
 
 with st.container(border=True):
 

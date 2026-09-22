@@ -386,10 +386,7 @@ def adicionar_paciente_planilha(conteudo_planilha):
     """Acrescenta o paciente atual ao final da planilha-gabarito."""
 
     try:
-        planilha = load_workbook(
-            BytesIO(conteudo_planilha),
-            data_only=False
-        )
+        planilha = load_workbook(BytesIO(conteudo_planilha), data_only=False)
     except Exception:
         return None, "Não foi possível abrir a planilha."
 
@@ -496,9 +493,8 @@ def mostrar_validacao():
             st.session_state["modulo_navegacao"] = (
                 "Classificação periodontal"
             )
-            st.session_state["mensagem_importacao"] = (
-                f"Caso {codigo_digitado} importado para todos os módulos."
-            )
+            st.session_state["mensagem_importacao"] = ( f"Caso {codigo_digitado} importado para todos os módulos.")
+               
             st.rerun()
 
     if "mensagem_importacao" in st.session_state:
@@ -513,11 +509,7 @@ def mostrar_validacao():
     observacao = st.text_input("Observação opcional", key="observacao_validacao")
 
     if st.button("Registrar resultados na planilha", width="stretch"):
-        arquivo_atualizado, erro = salvar_resultados(
-            st.session_state["planilha_validacao"],
-            codigo_atual,
-            observacao
-        )
+        arquivo_atualizado, erro = salvar_resultados(st.session_state["planilha_validacao"], codigo_atual, observacao)
 
         if erro is not None:
             st.warning(erro)
