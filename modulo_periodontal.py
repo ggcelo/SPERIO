@@ -534,7 +534,7 @@ def mostrar_modulo_periodontal():
 
             if (
                 perda_vertical is not None
-                and perda_vertical > 3
+                and perda_vertical >= 3
             ):
 
                 if estagio_final in ["I", "II"]:
@@ -645,7 +645,7 @@ def mostrar_modulo_periodontal():
 
             if (
                 dentes_remanescentes is not None
-                and dentes_remanescentes <= 20
+                and dentes_remanescentes < 20
                 and dentes_perdidos is not None
                 and dentes_perdidos > 0
             ):
@@ -796,15 +796,13 @@ def mostrar_modulo_periodontal():
         # usamos a relação %PBL / idade
         elif pbl is not None and idade is not None:
 
-            razao_pbl_idade = round(
-                pbl / idade,
-                2
-            )
+            razao_pbl_idade_calculo = pbl / idade
+            razao_pbl_idade = round(razao_pbl_idade_calculo, 2)
 
-            if razao_pbl_idade < 0.25:
+            if razao_pbl_idade_calculo < 0.25:
                 grau_base = "A"
 
-            elif razao_pbl_idade <= 1:
+            elif razao_pbl_idade_calculo <= 1:
                 grau_base = "B"
 
             else:
@@ -855,7 +853,7 @@ def mostrar_modulo_periodontal():
             criterio_grau_base = "Fenótipo"
 
 
-        # 4. Se nenhum critério estiver disponível
+        # 4. Sem evidência de progressão, parte-se do grau B.
         if grau_base is None:
 
             if pbl is None:
@@ -869,24 +867,13 @@ def mostrar_modulo_periodontal():
                     "Fenótipo clínico em relação ao biofilme"
                 )
 
-            if st.session_state["avaliacao"]["periodontal"] is None:
-                st.session_state["avaliacao"]["periodontal"] = {}
-
-            st.session_state["avaliacao"]["periodontal"][
-                "dados_ausentes_grau"
-            ] = dados_ausentes_grau_base
-
-            st.session_state["avaliacao"]["periodontal"]["status"] = (
-                "dados_insuficientes"
-            )
-
-            st.warning(
-                "Não foi possível calcular o grau com "
-                "os dados de progressão disponíveis."
+            grau_base = "B"
+            criterio_grau_base = (
+                "Grau B inicial por ausência de evidência de progressão"
             )
 
 
-        else:
+        if grau_base is not None:
 
             if st.session_state["avaliacao"]["periodontal"] is None:
                 st.session_state["avaliacao"]["periodontal"] = {}

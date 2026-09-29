@@ -187,7 +187,7 @@ def criar_imagem_anotada(imagem_bytes, resultados_dentes, mostrar_linhas):
                 continue
 
             x, y = ponto
-            raio = 5
+            raio = 8
 
             desenho.ellipse(
                 [

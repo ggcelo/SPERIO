@@ -1,3 +1,4 @@
+from decimal import Decimal
 from html import escape
 
 import streamlit as st
@@ -13,6 +14,13 @@ def mostrar_findrisc():
     idade = st.session_state["dados_caso"]["idade"]
     sexo = st.session_state["dados_caso"]["sexo"]
     imc = st.session_state["dados_clinicos"]["imc"]
+    peso = st.session_state["dados_clinicos"]["peso"]
+    altura = st.session_state["dados_clinicos"]["altura"]
+    # O IMC exibido é arredondado; a pontuação usa o valor sem arredondamento.
+    imc_calculo = (
+        Decimal(str(peso)) / (Decimal(str(altura)) ** 2)
+        if peso is not None and altura else imc
+    )
     cintura = st.session_state["dados_clinicos"]["cintura"]
     diabetes = st.session_state["dados_clinicos"]["diabetes"]
 
@@ -157,7 +165,7 @@ def mostrar_findrisc():
         if sexo is None:
             dados_ausentes_findrisc.append("Sexo")
 
-        if imc is None:
+        if imc_calculo is None:
             dados_ausentes_findrisc.append("IMC")
 
         if cintura is None:
@@ -213,10 +221,10 @@ def mostrar_findrisc():
 
 
             # IMC
-            if imc < 25:
+            if imc_calculo < 25:
                 pontos += 0
 
-            elif imc <= 30:
+            elif imc_calculo <= 30:
                 pontos += 1
 
             else:
@@ -276,23 +284,23 @@ def mostrar_findrisc():
                 pontos += 5
 
             if pontos < 7:
-                classificacao = "Baixo"
+                classificacao = "baixo"
                 estimativa = "Aproximadamente 1 em 100"
 
             elif pontos < 12:
-                classificacao = "Levemente moderado"
+                classificacao = "levemente elevado"
                 estimativa = "Aproximadamente 1 em 25"
 
             elif pontos < 15:
-                classificacao = "Moderado"
+                classificacao = "moderado"
                 estimativa = "Aproximadamente 1 em 6"
 
             elif pontos < 21:
-                classificacao = "Alto"
+                classificacao = "alto"
                 estimativa = "Aproximadamente 1 em 3"
 
             else:
-                classificacao = "Muito alto"
+                classificacao = "muito alto"
                 estimativa = "Aproximadamente 1 em 2"
 
              # Salva o resultado da avaliação
@@ -321,7 +329,7 @@ def mostrar_findrisc():
     elif resultado_findrisc is not None and "pontos" in resultado_findrisc:
         classe_resultado = "perio-result-card"
 
-        if resultado_findrisc["classificacao"] in ["Alto", "Muito alto"]:
+        if resultado_findrisc["classificacao"] in ["alto", "muito alto"]:
             classe_resultado = "perio-result-card is-warning"
 
         st.markdown(

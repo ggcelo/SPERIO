@@ -203,7 +203,7 @@ def salvar_resultados(conteudo_planilha, codigo, observacao):
     if periodontal is None:
         return None, "A classificação periodontal ainda não foi executada."
 
-    if diabetes != "Sim" and (findrisc is None or "pontos" not in findrisc):
+    if diabetes != "Sim" and findrisc is None:
         return None, "O FINDRISC ainda não foi executado."
 
     if interheart is None:
@@ -226,9 +226,13 @@ def salvar_resultados(conteudo_planilha, codigo, observacao):
         pontos_findrisc = "NA"
         classificacao_findrisc = "Não aplicável"
 
-    else:
+    elif findrisc is not None and "pontos" in findrisc:
         pontos_findrisc = findrisc["pontos"]
         classificacao_findrisc = findrisc["classificacao"]
+
+    else:
+        pontos_findrisc = "NC"
+        classificacao_findrisc = "NC"
 
     if "pontos" in interheart:
         pontos_interheart = interheart["pontos"]
