@@ -515,18 +515,18 @@ def mostrar_modulo_periodontal():
                     if estagio_final in ["I", "II"]:
                         estagio_final = "III"
 
-                    fatores_complexidade.append(
-                        "Profundidade de sondagem ≥ 6 mm"
-                    )
+                    fatores_complexidade.append("Profundidade de sondagem ≥ 6 mm")
+                        
+                   
 
                 elif sondagem > 4:
 
                     if estagio_final == "I":
                         estagio_final = "II"
 
-                    fatores_complexidade.append(
-                        "Profundidade de sondagem > 4 mm"
-                    )
+                    fatores_complexidade.append("Profundidade de sondagem > 4 mm")
+                        
+                    
 
 
             # Perda óssea vertical
@@ -534,7 +534,7 @@ def mostrar_modulo_periodontal():
 
             if (
                 perda_vertical is not None
-                and perda_vertical >= 3
+                and perda_vertical > 3
             ):
 
                 if estagio_final in ["I", "II"]:
@@ -645,7 +645,7 @@ def mostrar_modulo_periodontal():
 
             if (
                 dentes_remanescentes is not None
-                and dentes_remanescentes < 20
+                and dentes_remanescentes <= 20
                 and dentes_perdidos is not None
                 and dentes_perdidos > 0
             ):
