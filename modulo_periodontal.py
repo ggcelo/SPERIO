@@ -14,7 +14,7 @@ def mostrar_modulo_periodontal():
     # O %PBL já vem da avaliação radiográfica
     pbl = st.session_state["avaliacao"]["pbl"]
 
-    coluna_pbl, coluna_idade, coluna_modificadores = st.columns(3)
+    coluna_pbl, coluna_idade = st.columns(2)
 
     with coluna_pbl:
         if pbl is None:
@@ -32,17 +32,17 @@ def mostrar_modulo_periodontal():
     with coluna_idade:
         st.metric("Idade", f"{idade} anos" if idade is not None else "Pendente")
 
-    with coluna_modificadores:
-        if diabetes is None and tabagismo is None:
-            resumo_modificadores = "Não informados"
+    if diabetes is None and tabagismo is None:
+        resumo_modificadores = "Não informados"
 
-        else:
-            resumo_modificadores = (
-                f"Diabetes: {diabetes or '—'} · "
-                f"Tabagismo: {tabagismo or '—'}"
-            )
+    else:
+        resumo_modificadores = (
+            f"Diabetes: {diabetes or '—'} · "
+            f"Tabagismo: {tabagismo or '—'}"
+        )
 
-        st.metric("Modificadores compartilhados", resumo_modificadores)
+    st.metric("Modificadores compartilhados", resumo_modificadores)
+
 
     if pbl is None:
         st.info(

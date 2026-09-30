@@ -201,7 +201,6 @@ def mostrar_relatorio():
         valor_interheart = "Resultado ainda não calculado."
         classe_interheart = "perio-status"
 
-    colunas_resumo = st.columns(4)
     itens_resumo = [
         (
             classe_periodontal,
@@ -219,23 +218,18 @@ def mostrar_relatorio():
         )
     ]
 
-    for coluna, item in zip(colunas_resumo, itens_resumo):
-        classe, estado, titulo, valor = item
-
-        with coluna:
-            st.markdown(
-                f"""
-                <div class="{classe}">
-                    <div class="perio-status__state">{escape(estado)}</div>
-                    <div class="perio-status__title">{escape(titulo)}</div>
-                    <div class="perio-status__value">
-                        {escape(str(valor))}
-                    </div>
-                </div>
-                <br>
-                """,
-                unsafe_allow_html=True
-            )
+    linhas_resumo = "".join(
+        f'<div class="{classe}" role="listitem">'
+        f'<div class="perio-status__title">{escape(titulo)}</div>'
+        f'<div class="perio-status__value">{escape(str(valor))}</div>'
+        f'<div class="perio-status__state">{escape(estado)}</div>'
+        '</div>'
+        for classe, estado, titulo, valor in itens_resumo
+    )
+    st.markdown(
+        f'<div class="perio-status-list" role="list">{linhas_resumo}</div>',
+        unsafe_allow_html=True
+    )
 
     # DETALHAMENTO DOS RESULTADOS
 
