@@ -1,5 +1,6 @@
 from html import escape
 from pathlib import Path
+from base64 import b64encode
 
 import streamlit as st
 
@@ -26,10 +27,21 @@ st.markdown(
 )
 
 
+# Usa o arquivo original da marca, sem redesenhar ou recolorir a imagem.
+caminho_logo = Path(__file__).parent / "assets" / "sperio.png"
+if caminho_logo.is_file():
+    logo_base64 = b64encode(caminho_logo.read_bytes()).decode("ascii")
+    imagem_marca = (
+        '<img class="perio-brand__logo" '
+        f'src="data:image/png;base64,{logo_base64}" alt="SPERIO">'
+    )
+else:
+    imagem_marca = '<span>SPERIO</span>'
+
 st.markdown(
-    """
+    f"""
     <header class="perio-heading">
-        <h1>SPERIO</h1>
+        <h1 class="perio-brand">{imagem_marca}</h1>
         <p>
             Classificação AAP/EFP, análise radiográfica e escores de risco sistêmico.
             Preencha os dados do caso e selecione a avaliação que deseja realizar.
@@ -44,7 +56,11 @@ st.markdown(
 inicializar_session_state()
 
 with st.sidebar:
-    st.markdown("SPERIO")
+    st.markdown(
+        f'<div class="perio-brand perio-brand--sidebar">'
+        f'{imagem_marca}</div>',
+        unsafe_allow_html=True
+    )
     navegacao_lateral = st.empty()
     st.divider()
     with st.expander("Validação técnica por planilha"):

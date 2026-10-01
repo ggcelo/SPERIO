@@ -1,0 +1,5 @@
+# Modelos PyTorch
+*.pt
+
+# Planilha de dados local
+/planilha_gabarito_50_casos_resultados_logica_atual.xlsx

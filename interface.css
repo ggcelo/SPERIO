@@ -33,6 +33,7 @@ h1, h2, h3, h4 {
 }
 
 [data-testid="stMarkdownContainer"] h2 {
+    color: var(--perio-green-dark);
     font-size: 1.7rem;
     font-weight: 600;
     line-height: 1.4;
@@ -59,6 +60,32 @@ h1, h2, h3, h4 {
     line-height: 1.3;
     margin: 0;
     padding: 0;
+}
+
+.perio-brand {
+    align-items: center;
+    color: var(--perio-green-dark);
+    display: inline-flex;
+    gap: .75em;
+    max-width: 100%;
+}
+
+.perio-brand__logo {
+    display: block;
+    height: auto;
+    max-width: 100%;
+    width: 20rem;
+}
+
+.perio-brand--sidebar .perio-brand__logo {
+    width: 12rem;
+}
+
+.perio-brand--sidebar {
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 1rem;
 }
 
 .perio-heading p {
@@ -116,6 +143,10 @@ h1, h2, h3, h4 {
     color: var(--perio-green-dark);
 }
 
+.perio-status.is-complete {
+    border-top-color: #8eb6a6;
+}
+
 .perio-status.is-warning .perio-status__state {
     color: #805b26;
 }
@@ -136,7 +167,7 @@ h1, h2, h3, h4 {
 }
 
 .perio-result__title {
-    color: var(--perio-ink);
+    color: var(--perio-green-dark);
     font-size: 1.5rem;
     font-weight: 600;
     line-height: 1.4;
@@ -232,7 +263,8 @@ h1, h2, h3, h4 {
 }
 
 [data-testid="stForm"] [data-testid="stMarkdownContainer"] :is(h3, h4) {
-    border-bottom: 1px solid var(--perio-line);
+    color: var(--perio-green-dark);
+    border-bottom: 1px solid var(--perio-mint);
     padding-top: 1.5rem;
     padding-bottom: 1rem;
     margin-bottom: .5rem;
@@ -253,6 +285,7 @@ h1, h2, h3, h4 {
 .st-key-area_avaliacao {
     background: var(--perio-surface);
     border: 1px solid var(--perio-line);
+    border-top: 3px solid var(--perio-green);
     border-radius: 6px;
     gap: 1.75rem;
     margin-top: 2.5rem;
@@ -289,7 +322,7 @@ h1, h2, h3, h4 {
 }
 
 [data-testid="stMetricValue"] {
-    color: var(--perio-ink);
+    color: var(--perio-green-dark);
     font-size: 1.25rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -307,7 +340,17 @@ h1, h2, h3, h4 {
 }
 
 .st-key-modulo_navegacao label {
-    padding: .55rem 0;
+    border-radius: 4px;
+    padding: .55rem .65rem;
+}
+
+.st-key-modulo_navegacao label:hover {
+    background: #e5eee8;
+}
+
+.st-key-modulo_navegacao label:has(input:checked) {
+    background: var(--perio-mint);
+    color: var(--perio-green-dark);
 }
 
 div[role="radiogroup"] label:has(input:checked) {
@@ -335,6 +378,13 @@ button[kind="primary"]:hover {
     border-color: #123f35;
 }
 
+:is([data-testid="stButton"], [data-testid="stFormSubmitButton"],
+    [data-testid="stDownloadButton"]) button[kind="secondary"]:hover:not(:disabled) {
+    background: var(--perio-mint);
+    border-color: var(--perio-green);
+    color: var(--perio-green-dark);
+}
+
 button:focus-visible, summary:focus-visible {
     outline: 2px solid var(--perio-green);
     outline-offset: 3px;
@@ -354,6 +404,11 @@ button:focus-visible, summary:focus-visible {
 
 [data-testid="stMain"] [data-testid="stExpander"] summary {
     padding: 1rem 1.25rem;
+}
+
+[data-testid="stMain"] [data-testid="stExpander"] details[open] > summary {
+    background: #eef3f0;
+    color: var(--perio-green-dark);
 }
 
 [data-testid="stAlertContainer"] {
