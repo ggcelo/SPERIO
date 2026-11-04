@@ -1,5 +1,39 @@
-# Modelos PyTorch
+# Recursos privados: modelos, simulacoes e backups
+/models/*
+!/models/README.md
 *.pt
+*.pth
+*.onnx
+*.h5
+*.hdf5
+*.keras
+*.pkl
+*.pickle
+*.joblib
+*.safetensors
+*.ckpt
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+*.ods
+*.csv
+*.tsv
+/.local/
+/.github-publicacao/
 
-# Planilha de dados local
-/planilha_gabarito_50_casos_resultados_logica_atual.xlsx
+# Ambiente, configuracao pessoal e caches
+/.venv/
+/venv/
+/.vscode/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Credenciais locais
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml

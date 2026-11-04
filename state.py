@@ -2,14 +2,14 @@ import streamlit as st
 
 
 def inicializar_session_state():
-    #DICIONÁRIO DOS RESULTADOS
+    # DICIONÁRIO DOS RESULTADOS
 
-    if "avaliacao" not in st.session_state: 
+    if "avaliacao" not in st.session_state:
         st.session_state["avaliacao"] = {
             "periodontal": None,
             "findrisc": None,
             "interheart": None,
-            "pbl": None
+            "pbl": None,
         }
 
     # DICIONÁRIO DO MÓDULO RADIOGRÁFICO
@@ -23,17 +23,13 @@ def inicializar_session_state():
             "superficie_determinante": None,
             "confirmado": False,
             "imagem_anotada_bytes": None,
-            "pbl_calculado": False
+            "pbl_calculado": False,
         }
-    #DICIONÁRIO DOS DADOS DO CASO
+    # DICIONÁRIO DOS DADOS DO CASO
 
-    if "dados_caso" not in st.session_state: 
-        st.session_state["dados_caso"] = {
-            "codigo": None,
-            "idade": None,
-            "sexo": None
-        }
-    #DICIONARIO DOS DADOS CLINICOS COMPARTILHADOS
+    if "dados_caso" not in st.session_state:
+        st.session_state["dados_caso"] = {"codigo": None, "idade": None, "sexo": None}
+    # DICIONARIO DOS DADOS CLINICOS COMPARTILHADOS
 
     if "dados_clinicos" not in st.session_state:
         st.session_state["dados_clinicos"] = {
@@ -44,9 +40,9 @@ def inicializar_session_state():
             "imc": None,
             "diabetes": None,
             "tabagismo": None,
-            "cigarros_dia": None
+            "cigarros_dia": None,
         }
-    #DICIONARIO DOS DADOS ESPECIFICOS DO FINDRISC
+    # DICIONARIO DOS DADOS ESPECIFICOS DO FINDRISC
 
     if "dados_findrisc" not in st.session_state:
         st.session_state["dados_findrisc"] = {
@@ -54,9 +50,9 @@ def inicializar_session_state():
             "frutas_vegetais": None,
             "medicacao_pressao": None,
             "glicemia_elevada": None,
-            "historico_familiar": None
+            "historico_familiar": None,
         }
-    #DICIONARIO DOS DADOS ESPECIFICOS DO INTERHEART
+    # DICIONARIO DOS DADOS ESPECIFICOS DO INTERHEART
 
     if "dados_interheart" not in st.session_state:
         st.session_state["dados_interheart"] = {
@@ -70,7 +66,7 @@ def inicializar_session_state():
             "fritura_fast_food": None,
             "fruta_diaria": None,
             "vegetais_diarios": None,
-            "carne_aves": None
+            "carne_aves": None,
         }
     # DICIONÁRIO DOS DADOS ESPECÍFICOS DA CLASSIFICAÇÃO PERIODONTAL
 
@@ -92,5 +88,5 @@ def inicializar_session_state():
             "padrao_molar_incisivo": None,
             "progressao_5_anos": None,
             "fenotipo": None,
-            "hba1c": None
+            "hba1c": None,
         }

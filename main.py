@@ -1,6 +1,5 @@
 from html import escape
 from pathlib import Path
-from base64 import b64encode
 
 import streamlit as st
 
@@ -13,58 +12,24 @@ from relatorio import mostrar_relatorio
 from planilhas import mostrar_validacao
 
 st.set_page_config(
-    page_title="Apoio à Decisão em Periodontia",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="Software SPERIO",
+    page_icon=None,
+    layout="wide"
 )
 
 
-# Estilos compartilhados por todos os módulos, sem dependências externas.
+# Estilos compartilhados por todos os módulos.
 st.markdown(
-    "<style>" + Path(__file__).with_name("interface.css").read_text(encoding="utf-8")
-    + "</style>",
-    unsafe_allow_html=True
-)
-
-
-# Usa o arquivo original da marca, sem redesenhar ou recolorir a imagem.
-caminho_logo = Path(__file__).parent / "assets" / "sperio.png"
-if caminho_logo.is_file():
-    logo_base64 = b64encode(caminho_logo.read_bytes()).decode("ascii")
-    imagem_marca = (
-        '<img class="perio-brand__logo" '
-        f'src="data:image/png;base64,{logo_base64}" alt="SPERIO">'
-    )
-else:
-    imagem_marca = '<span>SPERIO</span>'
-
-st.markdown(
-    f"""
-    <header class="perio-heading">
-        <h1 class="perio-brand">{imagem_marca}</h1>
-        <p>
-            Classificação AAP/EFP, análise radiográfica e escores de risco sistêmico.
-            Preencha os dados do caso e selecione a avaliação que deseja realizar.
-        </p>
-    </header>
-    """,
-    unsafe_allow_html=True
+    "<style>" + Path(__file__).with_name("interface.css").read_text(encoding="utf-8") + "</style>",
+    unsafe_allow_html=True,
 )
 
 
 # INICIALIZA OS DICIONÁRIOS DO SESSION_STATE
 inicializar_session_state()
 
-with st.sidebar:
-    st.markdown(
-        f'<div class="perio-brand perio-brand--sidebar">'
-        f'{imagem_marca}</div>',
-        unsafe_allow_html=True
-    )
-    navegacao_lateral = st.empty()
-    st.divider()
-    with st.expander("Validação técnica por planilha"):
-        mostrar_validacao()
+with st.expander("Validação técnica por planilha"):
+    mostrar_validacao()
 
 dados_caso = st.session_state["dados_caso"]
 dados_clinicos = st.session_state["dados_clinicos"]
@@ -72,23 +37,38 @@ dados_clinicos = st.session_state["dados_clinicos"]
 dados_caso_preenchidos = (dados_caso["codigo"] is not None) #recebe se o codigo do caso ja foi preenchido
 dados_clinicos_preenchidos = (dados_caso["codigo"] is not None)
 
+st.markdown(
+    """
+    <section class="perio-hero">
+        <h1> SPERIO </h1>
+        <p>
+            Software integrado para avaliação periodontal, rastreamento de risco sistêmico e análise
+            radiográfica semiautomática
+        </p>
+    </section>
+    """,
+    unsafe_allow_html=True
+)
+
+
+etapas_avaliacao = st.empty()
+
 with st.expander(
-    "Dados compartilhados do caso", #caso o codigo tenha sido informado, uma proxima interação ira fechar o expander
+    "1. Informações compartilhadas do caso", #caso o codigo tenha sido informado, uma proxima interação ira fechar o expander
     expanded=not (dados_caso_preenchidos and dados_clinicos_preenchidos)
 ):
 
-    
+
     with st.form("form_dados_compartilhados"): #tudo dentro do with fica armazenado dentro do formulario
 
-        st.markdown("#### Identificação do caso")
-        coluna_codigo, coluna_idade, coluna_sexo = st.columns(
-            [1.5, 1, 1], gap="large"
-        )
+        st.markdown("#### Identificação segura")
+        coluna_codigo, coluna_idade, coluna_sexo = st.columns([1.5, 1, 1]) #cria 3 colunas já com a largura especifica para cada uma
+                                                                           #essas 3 colunas serão a largura dos inputs dentro do form
         with coluna_codigo:
             codigo_digitado = st.text_input(
-                "Código não identificável do caso:",
+                "Código do caso:",
                 value=dados_caso["codigo"] or "",
-                placeholder="Informe o código do caso"
+                placeholder="Exemplo: CASO_1"
             )
 
         with coluna_idade:
@@ -101,10 +81,10 @@ with st.expander(
                 placeholder="Não informado"
             )
 
-        with coluna_sexo:  
+        with coluna_sexo:
             opcoes_sexo = [None, "Feminino", "Masculino"]   #usamos o conceito de indice nao só aqui, mas em todo
             indice_sexo = 0                                 #input objetivo (marcar opcao), para que seja salvo a resposta
-                                                            #mesmo que o usuario va para outro modulo, o index manda qual opcao estará assinalada            
+                                                            #mesmo que o usuario va para outro modulo, o index manda qual opcao estará assinalada
             if dados_caso["sexo"] in opcoes_sexo:
                 indice_sexo = opcoes_sexo.index(dados_caso["sexo"])
 
@@ -115,8 +95,8 @@ with st.expander(
                 format_func=lambda opcao: opcao or "Não informado"
             )
 
-        st.markdown("#### Medidas antropométricas")
-        coluna_antropometria, coluna_medidas = st.columns(2, gap="large")
+        st.markdown("#### Dados clínicos e antropométricos")
+        coluna_antropometria, coluna_medidas, coluna_historico = st.columns(3)
 
         with coluna_antropometria:
             peso_digitado = st.number_input(
@@ -169,8 +149,7 @@ with st.expander(
                     f"{cintura_digitada / quadril_digitado:.3f}"
                 )
 
-        st.markdown("#### Histórico clínico")
-        with st.container():
+        with coluna_historico:
             opcoes_diabetes = [None, "Sim", "Não", "Não sabe"]
             indice_diabetes = 0
 
@@ -214,10 +193,10 @@ with st.expander(
                 value=dados_clinicos["cigarros_dia"],
                 step=1,
                 placeholder="Não informado",
-                
+
             )
 
-        coluna_salvar, coluna_limpar = st.columns(2, gap="large")
+        coluna_salvar, coluna_limpar = st.columns(2)
 
         with coluna_salvar:
             salvar_dados = st.form_submit_button(
@@ -237,9 +216,7 @@ with st.expander(
 if limpar_dados:
     st.session_state.clear()
     inicializar_session_state()
-    st.session_state["mensagem_limpeza"] = (
-        "Dados apagados. Uma nova avaliação pode ser iniciada."
-    )
+    st.session_state["mensagem_limpeza"] = "Dados apagados. Uma nova avaliação pode ser iniciada."
     st.rerun()
 
 
@@ -247,20 +224,14 @@ if "mensagem_limpeza" in st.session_state:
     st.success(st.session_state.pop("mensagem_limpeza"))
 
 
-#coloca todos os dados do formulario dentro do dados_caso
+# coloca todos os dados do formulario dentro do dados_caso
 if salvar_dados:
-
-    if codigo_digitado.strip() == "": #evita a colocar "  "
+    if codigo_digitado.strip() == "":  # evita a colocar "  "
         st.error("Digite o código do caso.")
-
     else:
         novo_codigo = codigo_digitado.strip()
-
         resultado_findrisc_anterior = st.session_state["avaliacao"]["findrisc"]
-        resultado_interheart_anterior = (
-            st.session_state["avaliacao"]["interheart"]
-        )
-
+        resultado_interheart_anterior = st.session_state["avaliacao"]["interheart"]
         dados_compartilhados_alterados = (
             idade_digitada != st.session_state["dados_caso"]["idade"]
             or sexo_digitado != st.session_state["dados_caso"]["sexo"]
@@ -268,22 +239,17 @@ if salvar_dados:
             or altura_digitada != st.session_state["dados_clinicos"]["altura"]
             or cintura_digitada != st.session_state["dados_clinicos"]["cintura"]
             or quadril_digitado != st.session_state["dados_clinicos"]["quadril"]
-            or diabetes_digitado
-            != st.session_state["dados_clinicos"]["diabetes"]
-            or tabagismo_digitado
-            != st.session_state["dados_clinicos"]["tabagismo"]
-            or cigarros_dia_digitado
-            != st.session_state["dados_clinicos"]["cigarros_dia"]
+            or diabetes_digitado != st.session_state["dados_clinicos"]["diabetes"]
+            or tabagismo_digitado != st.session_state["dados_clinicos"]["tabagismo"]
+            or cigarros_dia_digitado != st.session_state["dados_clinicos"]["cigarros_dia"]
         )
-
         st.session_state["dados_caso"]["codigo"] = novo_codigo
         st.session_state["dados_caso"]["idade"] = idade_digitada
         st.session_state["dados_caso"]["sexo"] = sexo_digitado
-
-        imc = None #salva imc, e nao imc_previo
+        imc = None  # salva imc, e nao imc_previo
 
         if peso_digitado is not None and altura_digitada is not None:
-            imc = round(peso_digitado / (altura_digitada ** 2),2)
+            imc = round(peso_digitado / (altura_digitada**2), 2)
 
         st.session_state["dados_clinicos"]["peso"] = peso_digitado
         st.session_state["dados_clinicos"]["altura"] = altura_digitada
@@ -292,16 +258,15 @@ if salvar_dados:
         st.session_state["dados_clinicos"]["imc"] = imc
         st.session_state["dados_clinicos"]["diabetes"] = diabetes_digitado
         st.session_state["dados_clinicos"]["tabagismo"] = tabagismo_digitado
-
         # Salva o valor informado sem presumir ausência de consumo.
-        st.session_state["dados_clinicos"]["cigarros_dia"] = (cigarros_dia_digitado)
+        st.session_state["dados_clinicos"]["cigarros_dia"] = cigarros_dia_digitado
 
         # Como idade ou sexo podem ter mudado,
         # os resultados que dependem desses dados
         # precisam ser calculados novamente
-        #os dados clínicos compartilhados são utilizados
-        #por diferentes módulos. Por isso, resultados
-        #anteriores precisam ser recalculados.
+        # os dados clínicos compartilhados são utilizados
+        # por diferentes módulos. Por isso, resultados
+        # anteriores precisam ser recalculados.
         if dados_compartilhados_alterados:
             st.session_state["avaliacao"]["findrisc"] = None
             st.session_state["avaliacao"]["interheart"] = None
@@ -309,10 +274,7 @@ if salvar_dados:
 
         # Se um escore já havia sido avaliado, a invalidação também registra
         # quando os novos dados passaram a ser insuficientes.
-        if (
-            dados_compartilhados_alterados
-            and resultado_findrisc_anterior is not None
-        ):
+        if dados_compartilhados_alterados and resultado_findrisc_anterior is not None:
             dados_ausentes_findrisc = []
 
             if diabetes_digitado is None:
@@ -335,49 +297,38 @@ if salvar_dados:
                 "frutas_vegetais": "Consumo diário de frutas ou vegetais",
                 "medicacao_pressao": "Uso de medicamento para pressão alta",
                 "glicemia_elevada": "Histórico de glicemia elevada",
-                "historico_familiar": "Histórico familiar de diabetes"
+                "historico_familiar": "Histórico familiar de diabetes",
             }
 
             for campo, nome_campo in campos_findrisc.items():
                 if st.session_state["dados_findrisc"][campo] is None:
                     dados_ausentes_findrisc.append(nome_campo)
 
-            if (
-                diabetes_digitado != "Sim"
-                and len(dados_ausentes_findrisc) > 0
-            ):
+            if diabetes_digitado != "Sim" and len(dados_ausentes_findrisc) > 0:
                 st.session_state["avaliacao"]["findrisc"] = {
                     "status": "dados_insuficientes",
-                    "dados_ausentes": dados_ausentes_findrisc
+                    "dados_ausentes": dados_ausentes_findrisc,
                 }
 
-        if (
-            dados_compartilhados_alterados
-            and resultado_interheart_anterior is not None
-        ):
+        if dados_compartilhados_alterados and resultado_interheart_anterior is not None:
             dados_ausentes_interheart = []
             dados_invalidos_interheart = []
-
             campos_compartilhados_interheart = [
                 (idade_digitada, "Idade"),
                 (sexo_digitado, "Sexo"),
                 (cintura_digitada, "Circunferência da cintura"),
                 (quadril_digitado, "Circunferência do quadril"),
                 (diabetes_digitado, "Situação de diabetes"),
-                (tabagismo_digitado, "Situação de tabagismo")
+                (tabagismo_digitado, "Situação de tabagismo"),
             ]
 
             for valor, nome_campo in campos_compartilhados_interheart:
                 if valor is None:
                     dados_ausentes_interheart.append(nome_campo)
 
-            if tabagismo_digitado in [
-                "Fumante atual",
-                "Ex-fumante há 12 meses ou menos"
-            ]:
+            if tabagismo_digitado in ["Fumante atual", "Ex-fumante há 12 meses ou menos"]:
                 if cigarros_dia_digitado is None:
                     dados_ausentes_interheart.append("Média de cigarros por dia")
-
                 elif cigarros_dia_digitado == 0:
                     dados_invalidos_interheart.append(
                         "Média de cigarros por dia incompatível com o tabagismo"
@@ -394,26 +345,27 @@ if salvar_dados:
                 "fritura_fast_food": "Consumo de fritura ou fast-food",
                 "fruta_diaria": "Consumo diário de frutas",
                 "vegetais_diarios": "Consumo diário de vegetais",
-                "carne_aves": "Consumo de carne ou aves"
+                "carne_aves": "Consumo de carne ou aves",
             }
 
             for campo, nome_campo in campos_interheart.items():
                 if st.session_state["dados_interheart"][campo] is None:
                     dados_ausentes_interheart.append(nome_campo)
 
-            if (
-                len(dados_ausentes_interheart) > 0
-                or len(dados_invalidos_interheart) > 0
-            ):
+            if len(dados_ausentes_interheart) > 0 or len(dados_invalidos_interheart) > 0:
                 st.session_state["avaliacao"]["interheart"] = {
                     "status": "dados_insuficientes",
                     "dados_ausentes": dados_ausentes_interheart,
-                    "dados_invalidos": dados_invalidos_interheart
+                    "dados_invalidos": dados_invalidos_interheart,
                 }
 
         st.success("Dados compartilhados salvos. Escolha um módulo para continuar.")
 
 
+resumo_avaliacoes = st.empty()
+
+
+st.markdown("## Área de trabalho")
 opcoes_modulos = [
     "Análise radiográfica",
     "Classificação periodontal",
@@ -421,16 +373,16 @@ opcoes_modulos = [
     "INTERHEART",
     "Relatório"
 ]
-with navegacao_lateral.container():
-    modulo = st.radio(
-        "Avaliações",
-        opcoes_modulos,
-        key="modulo_navegacao"
-    )
+modulo = st.radio(
+    "Módulo em edição",
+    opcoes_modulos,
+    horizontal=True,
+    key="modulo_navegacao"
+)
 
 # EXIBIÇÃO DOS MÓDULOS
 
-with st.container(key="area_avaliacao"):
+with st.container(border=True):
 
     if modulo == "Análise radiográfica":
         mostrar_modulo_radiografico()
@@ -448,97 +400,126 @@ with st.container(key="area_avaliacao"):
         mostrar_relatorio()
 
 
-if modulo != "Relatório":
-    with st.container(key="resumo_avaliacoes"):
-        st.markdown("### Situação das avaliações")
+# Atualiza os indicadores depois que o módulo conclui suas alterações.
+etapa_ativa = 3 if modulo == "Relatório" else 2 if st.session_state["dados_caso"]["codigo"] else 1
+passos = "".join(
+    f'<div class="perio-flow__step{" is-active" if numero == etapa_ativa else ""}">'
+    f'<span>{numero}</span>{rotulo}</div>'
+    for numero, rotulo in enumerate(
+        ["Preparação do caso", "Avaliações", "Revisão e relatório"], start=1
+    )
+)
+etapas_avaliacao.markdown(f'<div class="perio-flow">{passos}</div>', unsafe_allow_html=True)
+
+with resumo_avaliacoes.container():
+    st.markdown("## Estado da avaliação")
 
 
-        estado_periodontal = "Pendente"
-        texto_periodontal = "Aguardando classificação."
-        classe_periodontal = "perio-status"
+    estado_periodontal = "Pendente"
+    texto_periodontal = "Aguardando classificação."
+    classe_periodontal = "perio-status"
 
-        if st.session_state["avaliacao"]["periodontal"] is not None:
-            if "classificacao_final" in st.session_state["avaliacao"]["periodontal"]:
-                estado_periodontal = "Concluído"
-                texto_periodontal = st.session_state["avaliacao"]["periodontal"]["classificacao_final"]
-                classe_periodontal = "perio-status is-complete"
+    if st.session_state["avaliacao"]["periodontal"] is not None:
+        if "classificacao_final" in st.session_state["avaliacao"]["periodontal"]:
+            estado_periodontal = "Concluído"
+            texto_periodontal = st.session_state["avaliacao"]["periodontal"]["classificacao_final"]
+            classe_periodontal = "perio-status is-complete"
 
-                if st.session_state["avaliacao"]["periodontal"].get(
-                    "classificacao_provisoria",
-                    False
-                ):
-                    estado_periodontal = "Provisório"
-                    classe_periodontal = "perio-status is-warning"
-
-            elif st.session_state["avaliacao"]["periodontal"].get("status") == ("dados_insuficientes"):
-                estado_periodontal = "Dados insuficientes"
-                texto_periodontal = "Não foi possível concluir estágio e grau."
+            if st.session_state["avaliacao"]["periodontal"].get(
+                "classificacao_provisoria",
+                False
+            ):
+                estado_periodontal = "Provisório"
                 classe_periodontal = "perio-status is-warning"
 
-        estado_findrisc = "Pendente"
-        texto_findrisc = "Aguardando cálculo."
-        classe_findrisc = "perio-status"
+        elif st.session_state["avaliacao"]["periodontal"].get("status") == ("dados_insuficientes"):
+            estado_periodontal = "Dados insuficientes"
+            texto_periodontal = "Não foi possível concluir estágio e grau."
+            classe_periodontal = "perio-status is-warning"
 
-        if st.session_state["dados_clinicos"]["diabetes"] == "Sim":
-            estado_findrisc = "Não aplicável"
-            texto_findrisc = "Diabetes já diagnosticado."
-            classe_findrisc = "perio-status is-na"
+    estado_findrisc = "Pendente"
+    texto_findrisc = "Aguardando cálculo."
+    classe_findrisc = "perio-status"
 
-        elif (
-            st.session_state["avaliacao"]["findrisc"] is not None
-            and "pontos" in st.session_state["avaliacao"]["findrisc"]
-        ):
-            estado_findrisc = "Concluído"
-            texto_findrisc = st.session_state["avaliacao"]["findrisc"]["classificacao"]
-            classe_findrisc = "perio-status is-complete"
+    if st.session_state["dados_clinicos"]["diabetes"] == "Sim":
+        estado_findrisc = "Não aplicável"
+        texto_findrisc = "Diabetes já diagnosticado."
+        classe_findrisc = "perio-status is-na"
 
-        elif (
-            st.session_state["avaliacao"]["findrisc"] is not None
-            and st.session_state["avaliacao"]["findrisc"].get("status")
-            == "dados_insuficientes"
-        ):
-            estado_findrisc = "Dados insuficientes"
-            texto_findrisc = "Preencha as informações indicadas no módulo."
-            classe_findrisc = "perio-status is-warning"
+    elif (
+        st.session_state["avaliacao"]["findrisc"] is not None
+        and "pontos" in st.session_state["avaliacao"]["findrisc"]
+    ):
+        estado_findrisc = "Concluído"
+        texto_findrisc = st.session_state["avaliacao"]["findrisc"]["classificacao"]
+        classe_findrisc = "perio-status is-complete"
 
-        estado_interheart = "Pendente"
-        texto_interheart = "Aguardando cálculo."
-        classe_interheart = "perio-status"
+    elif (
+        st.session_state["avaliacao"]["findrisc"] is not None
+        and st.session_state["avaliacao"]["findrisc"].get("status")
+        == "dados_insuficientes"
+    ):
+        estado_findrisc = "Dados insuficientes"
+        texto_findrisc = "Preencha as informações indicadas no módulo."
+        classe_findrisc = "perio-status is-warning"
 
-        if (
-            st.session_state["avaliacao"]["interheart"] is not None
-            and "pontos" in st.session_state["avaliacao"]["interheart"]
-        ):
-            estado_interheart = "Concluído"
-            texto_interheart = st.session_state["avaliacao"]["interheart"]["classificacao"]
-            classe_interheart = "perio-status is-complete"
+    estado_interheart = "Pendente"
+    texto_interheart = "Aguardando cálculo."
+    classe_interheart = "perio-status"
 
-        elif (
-            st.session_state["avaliacao"]["interheart"] is not None
-            and st.session_state["avaliacao"]["interheart"].get("status")
-            == "dados_insuficientes"
-        ):
-            estado_interheart = "Dados insuficientes"
-            texto_interheart = "Preencha as informações indicadas no módulo."
-            classe_interheart = "perio-status is-warning"
+    if (
+        st.session_state["avaliacao"]["interheart"] is not None
+        and "pontos" in st.session_state["avaliacao"]["interheart"]
+    ):
+        estado_interheart = "Concluído"
+        texto_interheart = st.session_state["avaliacao"]["interheart"]["classificacao"]
+        classe_interheart = "perio-status is-complete"
 
-        itens_estado = [
-            (classe_periodontal, estado_periodontal, "AAP/EFP 2018", texto_periodontal),
-            (classe_findrisc, estado_findrisc, "FINDRISC", texto_findrisc),
-            (classe_interheart, estado_interheart, "INTERHEART", texto_interheart)
-        ]
-        linhas_estado = "".join(
-            f'<div class="{classe}" role="listitem">'
-            f'<div class="perio-status__title">{escape(titulo)}</div>'
-            f'<div class="perio-status__value">{escape(str(texto_estado))}</div>'
-            f'<div class="perio-status__state">{escape(estado)}</div>'
-            '</div>'
-            for classe, estado, titulo, texto_estado in itens_estado
+    elif (
+        st.session_state["avaliacao"]["interheart"] is not None
+        and st.session_state["avaliacao"]["interheart"].get("status")
+        == "dados_insuficientes"
+    ):
+        estado_interheart = "Dados insuficientes"
+        texto_interheart = "Preencha as informações indicadas no módulo."
+        classe_interheart = "perio-status is-warning"
+
+    coluna_periodontal, coluna_findrisc, coluna_interheart = st.columns(3)
+
+    for coluna, classe, estado, titulo, texto_estado in [
+        (
+            coluna_periodontal,
+            classe_periodontal,
+            estado_periodontal,
+            "AAP/EFP 2018",
+            texto_periodontal
+        ),
+        (
+            coluna_findrisc,
+            classe_findrisc,
+            estado_findrisc,
+            "FINDRISC",
+            texto_findrisc
+        ),
+        (
+            coluna_interheart,
+            classe_interheart,
+            estado_interheart,
+            "INTERHEART",
+            texto_interheart
         )
-        st.markdown(
-            f'<div class="perio-status-list" role="list">{linhas_estado}</div>',
-            unsafe_allow_html=True
-        )
+    ]:
+        with coluna:
+            st.markdown(
+                f"""
+                <div class="{classe}">
+                    <div class="perio-status__state">{escape(estado)}</div>
+                    <div class="perio-status__title">{escape(titulo)}</div>
+                    <div class="perio-status__value">{escape(str(texto_estado))}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
 
 with st.expander("Limites de uso e responsabilidade profissional"):

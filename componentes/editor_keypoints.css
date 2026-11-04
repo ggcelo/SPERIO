@@ -1,0 +1,48 @@
+.editor-keypoints {
+    font-family: var(--st-font, "Segoe UI", sans-serif);
+    color: var(--st-text-color, #334a45);
+}
+.barra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: .65rem;
+}
+select, button {
+    font: inherit;
+    padding: .45rem .65rem;
+    border: 1px solid #bacfc5;
+    border-radius: .4rem;
+    background: #fff;
+    color: #17352f;
+}
+button { cursor: pointer; }
+button.ativo { background: #195446; color: white; }
+button:focus-visible, select:focus-visible, svg:focus-visible {
+    outline: 3px solid #24705e;
+    outline-offset: 2px;
+}
+.quadro {
+    background: #17201d;
+    border: 1px solid #bacfc5;
+    border-radius: .5rem;
+    overflow: hidden;
+}
+svg {
+    display: block;
+    width: 100%;
+    height: min(65vh, 620px);
+    touch-action: none;
+    user-select: none;
+}
+.ponto { cursor: grab; }
+.ponto.arrastando { cursor: grabbing; }
+.ponto text {
+    fill: white;
+    stroke: #14241e;
+    stroke-width: 3px;
+    paint-order: stroke;
+    pointer-events: none;
+}
+.situacao { margin: .65rem 0 0; font-size: .9rem; }
