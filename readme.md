@@ -2,8 +2,6 @@
 
 Aplicação de apoio à decisão clínica em Periodontia, desenvolvida em Python com Streamlit. Integra classificação periodontal AAP/EFP, FINDRISC, INTERHEART e análise radiográfica de perda óssea periodontal.
 
-O SPERIO foi apresentado na MOSTRATEC, no Rio Grande do Sul, na categoria Ciências da Saúde, conquistando o **3º lugar** e uma **bolsa de inglês da Go! English**.
-
 ## Funcionalidades
 
 - Avaliação periodontal e integração de fatores de risco.
@@ -27,7 +25,11 @@ Se o ambiente `.venv` já existir, utilize-o diretamente.
 
 Este repositório publica o código da aplicação. **Os pesos do modelo de IA dos autores e a planilha de simulações não são distribuídos.** O modelo radiográfico é um recurso externo de terceiros; este projeto contém a integração com ele, sem reivindicar sua autoria.
 
-A inferência radiográfica depende de uma cópia obtida com autorização dos responsáveis, colocada em `models/perio_kpt_oficial_fold0_best.pt`. Veja [models/README.md](models/README.md). Sem esse arquivo, a interface informa sua ausência; os demais módulos não dependem desses pesos.
+A integração radiográfica utiliza o modelo externo Perio-KPT, associado ao trabalho de Banks et al. (2025), [*Periodontal Bone Loss Analysis via Keypoint Detection With Heuristic Post-Processing*](https://arxiv.org/abs/2503.13477). A autoria do modelo e da pesquisa original pertence aos respectivos autores.
+
+**Para utilizar o modelo radiográfico, acesse o [repositório original do Perio-KPT](https://github.com/Banksylel/Bone-Loss-Keypoint-Detection-Code) e siga as orientações e os links disponibilizados pelos autores para obter os pesos**, respeitando as condições de uso aplicáveis. O SPERIO não fornece nem baixa automaticamente esses arquivos.
+
+Após obter os pesos compatíveis, coloque o arquivo em `models/perio_kpt_oficial_fold0_best.pt`. Veja também [models/README.md](models/README.md). Sem esse arquivo, a interface informa sua ausência; os demais módulos não dependem desses pesos.
 
 As planilhas locais, os pesos, ambientes e backups são excluídos do versionamento pelo `.gitignore`.
 
